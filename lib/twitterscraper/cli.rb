@@ -14,11 +14,19 @@ module Twitterscraper
       client = Twitterscraper::Client.new
       limit = options['limit'] ? options['limit'].to_i : 100
       tweets = client.query_tweets(options['query'], limit: limit, start_date: options['start_date'], end_date: options['end_date'])
-      File.write('tweets.json', ::JSON.dump(tweets))
+      File.write('tweets.json', generate_json(tweets))
     end
 
     def options
       @options
+    end
+
+    def generate_json(tweets)
+      if options['pretty']
+        ::JSON.pretty_generate(tweets)
+      else
+        ::JSON.generate(tweets)
+      end
     end
 
     def parse_options(argv)
@@ -28,6 +36,7 @@ module Twitterscraper
           'limit:',
           'start_date:',
           'end_date:',
+          'pretty',
       )
     end
   end
