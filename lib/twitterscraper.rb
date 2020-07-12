@@ -1,6 +1,26 @@
-require "version"
+require 'twitterscraper/logger'
+require 'twitterscraper/proxy'
+require 'twitterscraper/http'
+require 'twitterscraper/lang'
+require 'twitterscraper/query'
+require 'twitterscraper/client'
+require 'twitterscraper/tweet'
+require 'version'
 
 module Twitterscraper
   class Error < StandardError; end
   # Your code goes here...
+
+  def self.logger
+    @logger ||= ::Logger.new(STDOUT)
+  end
+
+  def self.logger=(logger)
+    if logger.nil?
+      self.logger.level = ::Logger::FATAL
+      return self.logger
+    end
+
+    @logger = logger
+  end
 end
