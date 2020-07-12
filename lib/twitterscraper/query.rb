@@ -25,7 +25,7 @@ module Twitterscraper
         'include_available_features=1&include_entities=1&' +
         'max_position={pos}&reset_error_state=false'
 
-    def get_query_url(query, lang, pos, from_user = false)
+    def build_query_url(query, lang, pos, from_user = false)
       # if from_user
       #   if !pos
       #     INIT_URL_USER.format(u = query)
@@ -40,52 +40,45 @@ module Twitterscraper
       end
     end
 
-    def query_single_page(query, lang, pos, retries = 30, from_user = false, timeout = 3, headers: [], proxies: [])
+    def get_single_page(url, headers, proxies, timeout = 10, retries = 30)
+      Twitterscraper::Http.get(url, headers, proxies.sample, timeout)
+    rescue => e
+      logger.debug "query_single_page: #{e.inspect}"
+      if (retries -= 1) > 0
+        logger.info("Retrying... (Attempts left: #{retries - 1})")
+        retry
+      else
+        raise
+      end
+    end
+
+    def parse_single_page(text, html = true)
+      if html
+        json_resp = nil
+        items_html = text
+      else
+        json_resp = JSON.parse(text)
+        items_html = json_resp['items_html'] || ''
+        logger.debug json_resp['message'] if json_resp['message'] # Sorry, you are rate limited.
+      end
+
+      [items_html, json_resp]
+    end
+
+    def query_single_page(query, lang, pos, from_user = false, headers: [], proxies: [])
       query = query.gsub(' ', '%20').gsub('#', '%23').gsub(':', '%3A').gsub('&', '%26')
       logger.info("Querying #{query}")
 
-      url = get_query_url(query, lang, pos, from_user)
+      url = build_query_url(query, lang, pos, from_user)
       logger.debug("Scraping tweets from #{url}")
 
-      response = nil
-      begin
-        proxy = proxies.sample
-        logger.info("Using proxy #{proxy}")
-
-        response = Twitterscraper::Http.get(url, headers, proxy, timeout)
-      rescue => e
-        logger.debug "query_single_page: #{e.inspect}"
-        if (retries -= 1) > 0
-          logger.info("Retrying... (Attempts left: #{retries - 1})")
-          retry
-        else
-          raise
-        end
-      end
-
-      html = ''
-      json_resp = nil
-
-      if pos
-        begin
-          json_resp = JSON.parse(response)
-          html = json_resp['items_html'] || ''
-        rescue => e
-          logger.warn("Failed to parse JSON #{e.inspect} while requesting #{url}")
-        end
-      else
-        html = response || ''
-      end
+      response = get_single_page(url, headers, proxies)
+      html, json_resp = parse_single_page(response, pos.nil?)
 
       tweets = Tweet.from_html(html)
 
       if tweets.empty?
-        if json_resp && json_resp['has_more_items']
-          pos = json_resp['min_position']
-        else
-          pos = nil
-        end
-        return [], pos
+        return [], (json_resp && json_resp['has_more_items'] && json_resp['min_position'])
       end
 
       if json_resp
@@ -103,7 +96,7 @@ module Twitterscraper
       if start_date == end_date
         raise 'Please specify different values for :start_date and :end_date.'
       elsif start_date > end_date
-        raise 'The :start_date must occur before :end_date.'
+        raise ':start_date must occur before :end_date.'
       end
 
       # TODO parallel
@@ -112,7 +105,6 @@ module Twitterscraper
       all_tweets = []
 
       proxies = Twitterscraper::Proxy.get_proxies
-      logger.info "Using #{proxies.size} proxies"
 
       headers = {'User-Agent': USER_AGENT, 'X-Requested-With': 'XMLHttpRequest'}
       logger.info("Headers #{headers}")
@@ -124,13 +116,11 @@ module Twitterscraper
 
         while true
           new_tweets, new_pos = query_single_page(queries, lang, pos, headers: headers, proxies: proxies)
-          logger.info("Got #{new_tweets.size} tweets")
-          logger.debug("new_pos=#{new_pos}")
-
           unless new_tweets.empty?
             all_tweets.concat(new_tweets)
             all_tweets.uniq! { |t| t.tweet_id }
           end
+          logger.info("Got #{new_tweets.size} tweets (total #{all_tweets.size})")
 
           break unless new_pos
           break if all_tweets.size >= limit
@@ -138,7 +128,10 @@ module Twitterscraper
           pos = new_pos
         end
 
-        break if all_tweets.size >= limit
+        if all_tweets.size >= limit
+          logger.info("Reached limit #{all_tweets.size}")
+          break
+        end
       end
 
       all_tweets

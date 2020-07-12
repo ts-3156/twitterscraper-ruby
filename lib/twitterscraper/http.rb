@@ -9,6 +9,7 @@ module Twitterscraper
       if proxy
         ip, port = proxy.split(':')
         http_class = Net::HTTP::Proxy(ip, port.to_i)
+        Twitterscraper.logger.info("Using proxy #{proxy}")
       else
         http_class = Net::HTTP
       end
@@ -24,7 +25,8 @@ module Twitterscraper
         req[key] = value
       end
 
-      http.request(req).body
+      res = http.start { http.request(req) }
+      res.body
     end
   end
 end
