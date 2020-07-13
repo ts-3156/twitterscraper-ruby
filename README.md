@@ -143,6 +143,7 @@ $ cat tweets.json | jq . | less
 | `--limit` | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
 | `--threads` | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
 | `--proxy` | Scrape https://twitter.com/search via proxies. | false |
+| `--format` | The format of the output. | json |
 | `--output` | The name of the output file. | tweets.json |
 
 

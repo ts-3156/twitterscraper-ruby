@@ -25,7 +25,19 @@ module Twitterscraper
       }
       client = Twitterscraper::Client.new
       tweets = client.query_tweets(options['query'], query_options)
-      File.write(options['output'], generate_json(tweets)) unless tweets.empty?
+      export(tweets) unless tweets.empty?
+    end
+
+    def export(tweets)
+      write_json = lambda { File.write(options['output'], generate_json(tweets)) }
+
+      if options['format'] == 'json'
+        write_json.call
+      elsif options['format'] == 'html'
+        File.write('tweets.html', Template.tweets_embedded_html(tweets))
+      else
+        write_json.call
+      end
     end
 
     def generate_json(tweets)
@@ -53,6 +65,7 @@ module Twitterscraper
           'limit:',
           'threads:',
           'output:',
+          'format:',
           'proxy',
           'pretty',
           'verbose',
@@ -61,7 +74,8 @@ module Twitterscraper
       options['lang'] ||= ''
       options['limit'] = (options['limit'] || 100).to_i
       options['threads'] = (options['threads'] || 2).to_i
-      options['output'] ||= 'tweets.json'
+      options['format'] ||= 'json'
+      options['output'] ||= "tweets.#{options['format']}"
 
       options
     end

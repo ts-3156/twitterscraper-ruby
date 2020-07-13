@@ -5,6 +5,7 @@ require 'twitterscraper/lang'
 require 'twitterscraper/query'
 require 'twitterscraper/client'
 require 'twitterscraper/tweet'
+require 'twitterscraper/template'
 require 'version'
 
 module Twitterscraper
