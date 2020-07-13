@@ -15,7 +15,6 @@ module Twitterscraper
       print_help || return if print_help?
       print_version || return if print_version?
 
-      client = Twitterscraper::Client.new
       query_options = {
           start_date: options['start_date'],
           end_date: options['end_date'],
@@ -24,6 +23,7 @@ module Twitterscraper
           threads: options['threads'],
           proxy: options['proxy']
       }
+      client = Twitterscraper::Client.new
       tweets = client.query_tweets(options['query'], query_options)
       File.write(options['output'], generate_json(tweets))
     end
