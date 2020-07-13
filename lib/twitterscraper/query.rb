@@ -100,19 +100,20 @@ module Twitterscraper
         raise ':start_date must occur before :end_date.'
       end
 
-      proxies = Twitterscraper::Proxy.get_proxies
+      proxies = Twitterscraper::Proxy::Pool.new
 
       date_range = start_date.upto(end_date - 1)
       queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
       threads = queries.size if threads > queries.size
       logger.info("Threads #{threads}")
 
+      headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
+      logger.info("Headers #{headers}")
+
       all_tweets = []
       mutex = Mutex.new
 
       Parallel.each(queries, in_threads: threads) do |query|
-        headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
-        logger.info("Headers #{headers}")
 
         pos = nil
 

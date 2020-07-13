@@ -6,9 +6,9 @@ module Twitterscraper
     class RetryExhausted < StandardError
     end
 
-    class Result
-      def initialize(items)
-        @items = items
+    class Pool
+      def initialize
+        @items = Proxy.get_proxies
         @cur_index = 0
       end
 
@@ -31,7 +31,6 @@ module Twitterscraper
       def reload
         @items = Proxy.get_proxies
         @cur_index = 0
-        Twitterscraper.logger.debug "Reload #{proxies.size} proxies"
       end
     end
 
@@ -46,13 +45,14 @@ module Twitterscraper
 
       table.xpath('tbody/tr').each do |tr|
         cells = tr.xpath('td')
-        ip, port, https = [0, 1, 6].map { |i| cells[i].text.strip }
+        ip, port, anonymity, https = [0, 1, 4, 6].map { |i| cells[i].text.strip }
+        next unless ['elite proxy', 'anonymous'].include?(anonymity)
         next if https == 'no'
         proxies << ip + ':' + port
       end
 
       Twitterscraper.logger.debug "Fetch #{proxies.size} proxies"
-      Result.new(proxies.shuffle)
+      proxies.shuffle
     rescue => e
       if (retries -= 1) > 0
         retry
