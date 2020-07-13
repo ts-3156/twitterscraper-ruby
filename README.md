@@ -56,10 +56,58 @@ tweets = client.query_tweets(KEYWORD, options)
 tweets.each do |tweet|
   puts tweet.tweet_id
   puts tweet.text
-  puts tweet.created_at
   puts tweet.tweet_url
+  puts tweet.created_at
+
+  hash = tweet.attrs
+  puts hash.keys
 end
 ```
+
+
+## Attributes
+
+### Tweet
+
+- screen_name
+- name
+- user_id
+- tweet_id
+- text
+- links
+- hashtags
+- image_urls
+- video_url
+- has_media
+- likes
+- retweets
+- replies
+- is_replied
+- is_reply_to
+- parent_tweet_id
+- reply_to_users
+- tweet_url
+- created_at
+
+
+## Search operators
+
+| Operator | Finds Tweets... |
+| ------------- | ------------- |
+| watching now | containing both "watching" and "now". This is the default operator. |
+| "happy hour" | containing the exact phrase "happy hour". |
+| love OR hate | containing either "love" or "hate" (or both). |
+| beer -root | containing "beer" but not "root". |
+| #haiku | containing the hashtag "haiku". |
+| from:interior | sent from Twitter account "interior". |
+| to:NASA | a Tweet authored in reply to Twitter account "NASA". |
+| @NASA | mentioning Twitter account "NASA". |
+| puppy filter:media | containing "puppy" and an image or video. |
+| puppy -filter:retweets | containing "puppy", filtering out retweets |
+| superhero since:2015-12-21 | containing "superhero" and sent since date "2015-12-21" (year-month-day). |
+| puppy until:2015-12-21 | containing "puppy" and sent before the date "2015-12-21". |
+
+Search operators documentation is in [Standard search operators](https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators).
 
 
 ## Examples
@@ -79,26 +127,9 @@ $ cat tweets.json | jq . | less
     "tweet_url": "https://twitter.com/screenname/status/1282659891992000000",
     "created_at": "2020-07-13 12:00:00 +0000",
     "text": "Thanks Twitter!"
-  },
-  ...
+  }
 ]
 ```
-
-## Attributes
-
-### Tweet
-
-- tweet_id
-- text
-- user_id
-- screen_name
-- name
-- links
-- hashtags
-- image_urls
-- tweet_url
-- created_at
-
 
 ## CLI Options
 

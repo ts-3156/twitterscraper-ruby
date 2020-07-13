@@ -31,10 +31,14 @@ module Twitterscraper
       end
     end
 
-    def to_json(options = {})
+    def attrs
       KEYS.map do |key|
         [key, send(key)]
-      end.to_h.to_json
+      end.to_h
+    end
+
+    def to_json(options = {})
+      attrs.to_json
     end
 
     class << self
