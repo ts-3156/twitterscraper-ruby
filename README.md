@@ -29,10 +29,11 @@ $ gem install twitterscraper-ruby
 
 ## Usage
 
-Command line:
+Command-line interface:
 
 ```shell script
-$ twitterscraper --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja --limit 100 --threads 10 --proxy --output output.json
+$ twitterscraper --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja \
+      --limit 100 --threads 10 --proxy --output output.json
 ```
 
 From Within Ruby:
@@ -60,7 +61,18 @@ tweets.each do |tweet|
 end
 ```
 
-### Tweet Attributes
+
+## Examples
+
+```shell script
+$ twitterscraper --query twitter --limit 1000
+$ cat tweets.json | jq . | less
+```
+
+
+## Attributes
+
+### Tweet
 
 - tweet_id
 - text
@@ -73,41 +85,17 @@ end
 
 ## CLI Options
 
-#### `-h`, `--help`
-
-This option displays a summary of twitterscraper.
-
-#### `--query`
-
-Specify a keyword used during the search.
-
-#### `--start_date`
-
-Set the date from which twitterscraper-ruby should start scraping for your query.
-
-#### `--end_date`
-
-Set the enddate which twitterscraper-ruby should use to stop scraping for your query.
-
-#### `--lang`
-
-Retrieve tweets written in a specific language. 
-
-#### `--limit`
-
-Stop scraping when *at least* the number of tweets indicated with --limit is scraped.
-
-#### `--threads`
-
-Set the number of threads twitterscraper-ruby should initiate while scraping for your query.
-
-#### `--proxy`
-
-Scrape https://twitter.com/search via proxies.
-
-#### `--output`
-
-The name of the output file.
+| Option | Description | Default |
+| ------------- | ------------- | ------------- |
+| `-h`, `--help` | This option displays a summary of twitterscraper. | |
+| `--query` | Specify a keyword used during the search. | |
+| `--start_date` | Set the date from which twitterscraper-ruby should start scraping for your query. | |
+| `--end_date` | Set the enddate which twitterscraper-ruby should use to stop scraping for your query. | |
+| `--lang` | Retrieve tweets written in a specific language. | |
+| `--limit` | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
+| `--threads` | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
+| `--proxy` | Scrape https://twitter.com/search via proxies. | false |
+| `--output` | The name of the output file. | tweets.json |
 
 
 ## Contributing
