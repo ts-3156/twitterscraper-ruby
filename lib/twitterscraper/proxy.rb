@@ -8,7 +8,7 @@ module Twitterscraper
 
     class Result
       def initialize(items)
-        @items = items.shuffle
+        @items = items
         @cur_index = 0
       end
 
@@ -17,7 +17,9 @@ module Twitterscraper
           reload
         end
         @cur_index += 1
-        @items[@cur_index - 1]
+        item = @items[@cur_index - 1]
+        Twitterscraper.logger.info("Using proxy #{item}")
+        item
       end
 
       def size
@@ -27,7 +29,7 @@ module Twitterscraper
       private
 
       def reload
-        @items = Proxy.get_proxies.shuffle
+        @items = Proxy.get_proxies
         @cur_index = 0
         Twitterscraper.logger.debug "Reload #{proxies.size} proxies"
       end
@@ -50,7 +52,7 @@ module Twitterscraper
       end
 
       Twitterscraper.logger.debug "Fetch #{proxies.size} proxies"
-      Result.new(proxies)
+      Result.new(proxies.shuffle)
     rescue => e
       if (retries -= 1) > 0
         retry

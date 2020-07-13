@@ -9,7 +9,6 @@ module Twitterscraper
       if proxy
         ip, port = proxy.split(':')
         http_class = Net::HTTP::Proxy(ip, port.to_i)
-        Twitterscraper.logger.info("Using proxy #{proxy}")
       else
         http_class = Net::HTTP
       end

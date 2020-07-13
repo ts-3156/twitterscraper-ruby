@@ -1,7 +1,9 @@
+require 'resolv-replace'
 require 'net/http'
 require 'nokogiri'
 require 'date'
 require 'json'
+require 'parallel'
 
 module Twitterscraper
   module Query
@@ -14,7 +16,6 @@ module Twitterscraper
         'Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16',
         'Mozilla/5.0 (Windows NT 5.2; RW; rv:7.0a1) Gecko/20091211 SeaMonkey/9.23a1pre',
     ]
-    USER_AGENT = USER_AGENT_LIST.sample
 
     INIT_URL = 'https://twitter.com/search?f=tweets&vertical=default&q=__QUERY__&l=__LANG__'
     RELOAD_URL = 'https://twitter.com/i/search/timeline?f=tweets&vertical=' +
@@ -59,15 +60,15 @@ module Twitterscraper
       else
         json_resp = JSON.parse(text)
         items_html = json_resp['items_html'] || ''
-        logger.debug json_resp['message'] if json_resp['message'] # Sorry, you are rate limited.
+        logger.warn json_resp['message'] if json_resp['message'] # Sorry, you are rate limited.
       end
 
       [items_html, json_resp]
     end
 
     def query_single_page(query, lang, pos, from_user = false, headers: [], proxies: [])
-      query = query.gsub(' ', '%20').gsub('#', '%23').gsub(':', '%3A').gsub('&', '%26')
       logger.info("Querying #{query}")
+      query = query.gsub(' ', '%20').gsub('#', '%23').gsub(':', '%3A').gsub('&', '%26')
 
       url = build_query_url(query, lang, pos, from_user)
       logger.debug("Scraping tweets from #{url}")
@@ -99,28 +100,31 @@ module Twitterscraper
         raise ':start_date must occur before :end_date.'
       end
 
-      # TODO parallel
-
-      pos = nil
-      all_tweets = []
-
       proxies = Twitterscraper::Proxy.get_proxies
 
-      headers = {'User-Agent': USER_AGENT, 'X-Requested-With': 'XMLHttpRequest'}
-      logger.info("Headers #{headers}")
+      date_range = start_date.upto(end_date - 1)
+      queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+      threads = queries.size if threads > queries.size
+      logger.info("Threads #{threads}")
 
-      start_date.upto(end_date) do |date|
-        break if date == end_date
+      all_tweets = []
+      mutex = Mutex.new
 
-        queries = query + " since:#{date} until:#{date + 1}"
+      Parallel.each(queries, in_threads: threads) do |query|
+        headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
+        logger.info("Headers #{headers}")
+
+        pos = nil
 
         while true
-          new_tweets, new_pos = query_single_page(queries, lang, pos, headers: headers, proxies: proxies)
+          new_tweets, new_pos = query_single_page(query, lang, pos, headers: headers, proxies: proxies)
           unless new_tweets.empty?
-            all_tweets.concat(new_tweets)
-            all_tweets.uniq! { |t| t.tweet_id }
+            mutex.synchronize {
+              all_tweets.concat(new_tweets)
+              all_tweets.uniq! { |t| t.tweet_id }
+            }
           end
-          logger.info("Got #{new_tweets.size} tweets (total #{all_tweets.size})")
+          logger.info("Got #{new_tweets.size} tweets (total #{all_tweets.size}) worker=#{Parallel.worker_number}")
 
           break unless new_pos
           break if all_tweets.size >= limit
@@ -130,11 +134,11 @@ module Twitterscraper
 
         if all_tweets.size >= limit
           logger.info("Reached limit #{all_tweets.size}")
-          break
+          raise Parallel::Break
         end
       end
 
-      all_tweets
+      all_tweets.sort_by { |tweet| -tweet.created_at.to_i }
     end
   end
 end
