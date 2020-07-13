@@ -93,6 +93,9 @@ $ cat tweets.json | jq . | less
 - user_id
 - screen_name
 - name
+- links
+- hashtags
+- image_urls
 - tweet_url
 - created_at
 
