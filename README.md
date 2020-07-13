@@ -69,6 +69,20 @@ $ twitterscraper --query twitter --limit 1000
 $ cat tweets.json | jq . | less
 ```
 
+```json
+[
+  {
+    "screen_name": "@screenname",
+    "name": "name",
+    "user_id": 1194529546483000000,
+    "tweet_id": 1282659891992000000,
+    "tweet_url": "https://twitter.com/screenname/status/1282659891992000000",
+    "created_at": "2020-07-13 12:00:00 +0000",
+    "text": "Thanks Twitter!"
+  },
+  ...
+]
+```
 
 ## Attributes
 

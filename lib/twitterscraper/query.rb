@@ -3,6 +3,7 @@ require 'net/http'
 require 'nokogiri'
 require 'date'
 require 'json'
+require 'erb'
 require 'parallel'
 
 module Twitterscraper
@@ -71,7 +72,7 @@ module Twitterscraper
 
     def query_single_page(query, lang, pos, from_user = false, headers: [], proxies: [])
       logger.info("Querying #{query}")
-      query = query.gsub(' ', '%20').gsub('#', '%23').gsub(':', '%3A').gsub('&', '%26')
+      query = ERB::Util.url_encode(query)
 
       url = build_query_url(query, lang, pos, from_user)
       logger.debug("Scraping tweets from #{url}")
@@ -98,7 +99,15 @@ module Twitterscraper
 
     OLDEST_DATE = Date.parse('2006-3-21')
 
-    def validate_options!(start_date:, end_date:, lang:, limit:, threads:, proxy:)
+    def validate_options!(query, start_date:, end_date:, lang:, limit:, threads:, proxy:)
+      if query.nil? || query == ''
+        raise 'Please specify a search query.'
+      end
+
+      if ERB::Util.url_encode(query).length >= 500
+        raise ':query must be a UTF-8, URL-encoded search query of 500 characters maximum, including operators.'
+      end
+
       if start_date && end_date
         if start_date == end_date
           raise 'Please specify different values for :start_date and :end_date.'
@@ -166,12 +175,12 @@ module Twitterscraper
     def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, threads: 2, proxy: false)
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
-      proxies = proxy ? Twitterscraper::Proxy::Pool.new : []
-
-      validate_options!(start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
-
       queries = build_queries(query, start_date, end_date)
       threads = queries.size if threads > queries.size
+      proxies = proxy ? Twitterscraper::Proxy::Pool.new : []
+
+      validate_options!(queries[0], start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
+
       logger.info("The number of threads #{threads}")
 
       headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
