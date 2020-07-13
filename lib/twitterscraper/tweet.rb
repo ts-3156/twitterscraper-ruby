@@ -43,6 +43,14 @@ module Twitterscraper
     end
 
     class << self
+      def from_json(text)
+        json = JSON.parse(text)
+        json.map do |tweet|
+          tweet['created_at'] = Time.parse(tweet['created_at'])
+          new(tweet)
+        end
+      end
+
       def from_html(text)
         html = Nokogiri::HTML(text)
         from_tweets_html(html.xpath("//li[@class[contains(., 'js-stream-item')]]/div[@class[contains(., 'js-stream-tweet')]]"))
