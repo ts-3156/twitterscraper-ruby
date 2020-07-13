@@ -21,6 +21,7 @@ module Twitterscraper
         :parent_tweet_id,
         :reply_to_users,
         :tweet_url,
+        :timestamp,
         :created_at,
     ]
     attr_reader *KEYS
@@ -78,7 +79,7 @@ module Twitterscraper
           reply_to_users = inner_html.xpath("//div[@class[contains(., 'ReplyingToContextBelowAuthor')]]/a").map { |user| {screen_name: user.text.delete_prefix('@'), user_id: user.attr('data-user-id')} }
         end
 
-        timestamp = inner_html.xpath("//span[@class[contains(., 'ProfileTweet-action--favorite')]]").first.attr('data-time').to_i
+        timestamp = inner_html.xpath("//span[@class[contains(., 'js-short-timestamp')]]").first.attr('data-time').to_i
         new(
             screen_name: html.attr('data-screen-name'),
             name: html.attr('data-name'),
@@ -98,6 +99,7 @@ module Twitterscraper
             parent_tweet_id: parent_tweet_id,
             reply_to_users: reply_to_users,
             tweet_url: 'https://twitter.com' + html.attr('data-permalink-path'),
+            timestamp: timestamp,
             created_at: Time.at(timestamp, in: '+00:00'),
         )
       end
