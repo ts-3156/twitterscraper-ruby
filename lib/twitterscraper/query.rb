@@ -97,7 +97,7 @@ module Twitterscraper
       end
     end
 
-    OLDEST_DATE = Date.parse('2006-3-21')
+    OLDEST_DATE = Date.parse('2006-03-21')
 
     def validate_options!(query, start_date:, end_date:, lang:, limit:, threads:, proxy:)
       if query.nil? || query == ''

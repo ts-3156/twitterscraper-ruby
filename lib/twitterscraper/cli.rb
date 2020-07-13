@@ -25,7 +25,7 @@ module Twitterscraper
       }
       client = Twitterscraper::Client.new
       tweets = client.query_tweets(options['query'], query_options)
-      File.write(options['output'], generate_json(tweets))
+      File.write(options['output'], generate_json(tweets)) unless tweets.empty?
     end
 
     def generate_json(tweets)
