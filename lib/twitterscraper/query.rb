@@ -41,13 +41,12 @@ module Twitterscraper
       end
     end
 
-    def get_single_page(url, headers, proxies, timeout = 10, retries = 30, retry_in = 1)
+    def get_single_page(url, headers, proxies, timeout = 10, retries = 30)
       Twitterscraper::Http.get(url, headers, proxies.sample, timeout)
     rescue => e
       logger.debug "query_single_page: #{e.inspect}"
       if (retries -= 1) > 0
         logger.info("Retrying... (Attempts left: #{retries - 1})")
-        sleep retry_in
         retry
       else
         raise

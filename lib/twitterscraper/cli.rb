@@ -8,6 +8,7 @@ module Twitterscraper
   class Cli
     def parse
       @options = parse_options(ARGV)
+      initialize_logger
     end
 
     def run
@@ -54,6 +55,7 @@ module Twitterscraper
           'output:',
           'proxy',
           'pretty',
+          'verbose',
       )
 
       options['lang'] ||= ''
@@ -62,6 +64,10 @@ module Twitterscraper
       options['output'] ||= 'tweets.json'
 
       options
+    end
+
+    def initialize_logger
+      Twitterscraper.logger.level = ::Logger::DEBUG if options['verbose']
     end
 
     def print_help?

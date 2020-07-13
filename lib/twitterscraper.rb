@@ -9,10 +9,9 @@ require 'version'
 
 module Twitterscraper
   class Error < StandardError; end
-  # Your code goes here...
 
   def self.logger
-    @logger ||= ::Logger.new(STDOUT)
+    @logger ||= ::Logger.new(STDOUT, level: ::Logger::INFO)
   end
 
   def self.logger=(logger)
