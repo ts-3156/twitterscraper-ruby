@@ -11,6 +11,9 @@ module Twitterscraper
     end
 
     def run
+      print_help || return if print_help?
+      print_version || return if print_version?
+
       client = Twitterscraper::Client.new
       query_options = {
           start_date: options['start_date'],
@@ -39,6 +42,9 @@ module Twitterscraper
     def parse_options(argv)
       options = argv.getopts(
           'h',
+          'help',
+          'v',
+          'version',
           'query:',
           'start_date:',
           'end_date:',
@@ -56,6 +62,25 @@ module Twitterscraper
       options['output'] ||= 'tweets.json'
 
       options
+    end
+
+    def print_help?
+      options['h'] || options['help']
+    end
+
+    def print_help
+      puts <<~'SHELL'
+        Usage:
+          twitterscraper --query KEYWORD --limit 100 --threads 10 --start_date 2020-07-01 --end_date 2020-07-10 --lang ja --proxy --output output.json
+      SHELL
+    end
+
+    def print_version?
+      options['v'] || options['version']
+    end
+
+    def print_version
+      puts "twitterscraper-#{Twitterscraper::VERSION}"
     end
   end
 end
