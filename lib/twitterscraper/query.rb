@@ -41,12 +41,13 @@ module Twitterscraper
       end
     end
 
-    def get_single_page(url, headers, proxies, timeout = 10, retries = 30)
+    def get_single_page(url, headers, proxies, timeout = 10, retries = 30, retry_in = 1)
       Twitterscraper::Http.get(url, headers, proxies.sample, timeout)
     rescue => e
       logger.debug "query_single_page: #{e.inspect}"
       if (retries -= 1) > 0
         logger.info("Retrying... (Attempts left: #{retries - 1})")
+        sleep retry_in
         retry
       else
         raise
@@ -91,7 +92,7 @@ module Twitterscraper
       end
     end
 
-    def query_tweets(query, start_date: nil, end_date: nil, limit: 100, threads: 2, lang: '')
+    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, threads: 2, proxy: false)
       start_date = start_date ? Date.parse(start_date) : Date.parse('2006-3-21')
       end_date = end_date ? Date.parse(end_date) : Date.today
       if start_date == end_date
@@ -100,7 +101,7 @@ module Twitterscraper
         raise ':start_date must occur before :end_date.'
       end
 
-      proxies = Twitterscraper::Proxy::Pool.new
+      proxies = proxy ? Twitterscraper::Proxy::Pool.new : []
 
       date_range = start_date.upto(end_date - 1)
       queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }

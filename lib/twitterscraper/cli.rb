@@ -12,14 +12,16 @@ module Twitterscraper
 
     def run
       client = Twitterscraper::Client.new
-      limit = options['limit'] ? options['limit'].to_i : 100
-      threads = options['threads'] ? options['threads'].to_i : 2
-      tweets = client.query_tweets(options['query'], limit: limit, threads: threads, start_date: options['start_date'], end_date: options['end_date'])
-      File.write('tweets.json', generate_json(tweets))
-    end
-
-    def options
-      @options
+      query_options = {
+          start_date: options['start_date'],
+          end_date: options['end_date'],
+          lang: options['lang'],
+          limit: options['limit'],
+          threads: options['threads'],
+          proxy: options['proxy']
+      }
+      tweets = client.query_tweets(options['query'], query_options)
+      File.write(options['output'], generate_json(tweets))
     end
 
     def generate_json(tweets)
@@ -30,16 +32,30 @@ module Twitterscraper
       end
     end
 
+    def options
+      @options
+    end
+
     def parse_options(argv)
-      argv.getopts(
+      options = argv.getopts(
           'h',
           'query:',
-          'limit:',
           'start_date:',
           'end_date:',
+          'lang:',
+          'limit:',
           'threads:',
+          'output:',
+          'proxy',
           'pretty',
       )
+
+      options['lang'] ||= ''
+      options['limit'] = (options['limit'] || 100).to_i
+      options['threads'] = (options['threads'] || 2).to_i
+      options['output'] ||= 'tweets.json'
+
+      options
     end
   end
 end
