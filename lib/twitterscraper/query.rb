@@ -41,7 +41,8 @@ module Twitterscraper
       end
     end
 
-    def get_single_page(url, headers, proxies, timeout = 10, retries = 30)
+    def get_single_page(url, headers, proxies, timeout = 6, retries = 30)
+      return nil if stop_requested?
       Twitterscraper::Http.get(url, headers, proxies.sample, timeout)
     rescue => e
       logger.debug "query_single_page: #{e.inspect}"
@@ -54,6 +55,8 @@ module Twitterscraper
     end
 
     def parse_single_page(text, html = true)
+      return [nil, nil] if text.nil? || text == ''
+
       if html
         json_resp = nil
         items_html = text
@@ -74,6 +77,8 @@ module Twitterscraper
       logger.debug("Scraping tweets from #{url}")
 
       response = get_single_page(url, headers, proxies)
+      return [], nil if response.nil?
+
       html, json_resp = parse_single_page(response, pos.nil?)
 
       tweets = Tweet.from_html(html)
@@ -91,55 +96,104 @@ module Twitterscraper
       end
     end
 
-    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, threads: 2, proxy: false)
-      start_date = start_date ? Date.parse(start_date) : Date.parse('2006-3-21')
-      end_date = end_date ? Date.parse(end_date) : Date.today
-      if start_date == end_date
-        raise 'Please specify different values for :start_date and :end_date.'
-      elsif start_date > end_date
-        raise ':start_date must occur before :end_date.'
+    OLDEST_DATE = Date.parse('2006-3-21')
+
+    def validate_options!(start_date:, end_date:, lang:, limit:, threads:, proxy:)
+      if start_date && end_date
+        if start_date == end_date
+          raise 'Please specify different values for :start_date and :end_date.'
+        elsif start_date > end_date
+          raise ':start_date must occur before :end_date.'
+        end
       end
 
+      if start_date
+        if start_date < OLDEST_DATE
+          raise ":start_date must be greater than or equal to #{OLDEST_DATE}"
+        end
+      end
+
+      if end_date
+        today = Date.today
+        if end_date > Date.today
+          raise ":end_date must be less than or equal to today(#{today})"
+        end
+      end
+    end
+
+    def build_queries(query, start_date, end_date)
+      if start_date && end_date
+        date_range = start_date.upto(end_date - 1)
+        date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+      elsif start_date
+        [query + " since:#{start_date}"]
+      elsif end_date
+        [query + " until:#{end_date}"]
+      else
+        [query]
+      end
+    end
+
+    def main_loop(query, lang, limit, headers, proxies)
+      pos = nil
+
+      while true
+        new_tweets, new_pos = query_single_page(query, lang, pos, headers: headers, proxies: proxies)
+        unless new_tweets.empty?
+          @mutex.synchronize {
+            @all_tweets.concat(new_tweets)
+            @all_tweets.uniq! { |t| t.tweet_id }
+          }
+        end
+        logger.info("Got #{new_tweets.size} tweets (total #{@all_tweets.size})")
+
+        break unless new_pos
+        break if @all_tweets.size >= limit
+
+        pos = new_pos
+      end
+
+      if @all_tweets.size >= limit
+        logger.info("Limit reached #{@all_tweets.size}")
+        @stop_requested = true
+      end
+    end
+
+    def stop_requested?
+      @stop_requested
+    end
+
+    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, threads: 2, proxy: false)
+      start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
+      end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       proxies = proxy ? Twitterscraper::Proxy::Pool.new : []
 
-      date_range = start_date.upto(end_date - 1)
-      queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+      validate_options!(start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
+
+      queries = build_queries(query, start_date, end_date)
       threads = queries.size if threads > queries.size
-      logger.info("Threads #{threads}")
+      logger.info("The number of threads #{threads}")
 
       headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
       logger.info("Headers #{headers}")
 
-      all_tweets = []
-      mutex = Mutex.new
+      @all_tweets = []
+      @mutex = Mutex.new
+      @stop_requested = false
 
-      Parallel.each(queries, in_threads: threads) do |query|
-
-        pos = nil
-
-        while true
-          new_tweets, new_pos = query_single_page(query, lang, pos, headers: headers, proxies: proxies)
-          unless new_tweets.empty?
-            mutex.synchronize {
-              all_tweets.concat(new_tweets)
-              all_tweets.uniq! { |t| t.tweet_id }
-            }
-          end
-          logger.info("Got #{new_tweets.size} tweets (total #{all_tweets.size}) worker=#{Parallel.worker_number}")
-
-          break unless new_pos
-          break if all_tweets.size >= limit
-
-          pos = new_pos
+      if threads > 1
+        Parallel.each(queries, in_threads: threads) do |query|
+          main_loop(query, lang, limit, headers, proxies)
+          raise Parallel::Break if stop_requested?
         end
-
-        if all_tweets.size >= limit
-          logger.info("Reached limit #{all_tweets.size}")
-          raise Parallel::Break
+      else
+        queries.each do |query|
+          main_loop(query, lang, limit, headers, proxies)
+          break if stop_requested?
         end
       end
 
-      all_tweets.sort_by { |tweet| -tweet.created_at.to_i }
+      @all_tweets.sort_by { |tweet| -tweet.created_at.to_i }
     end
   end
 end

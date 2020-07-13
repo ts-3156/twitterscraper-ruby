@@ -2,10 +2,10 @@
 
 [![Gem Version](https://badge.fury.io/rb/twitterscraper-ruby.svg)](https://badge.fury.io/rb/twitterscraper-ruby)
 
-A gem to scrape https://twitter.com/search. This is inspired by [taspinar/twitterscraper](https://github.com/taspinar/twitterscraper).
+A gem to scrape https://twitter.com/search. This gem is inspired by [taspinar/twitterscraper](https://github.com/taspinar/twitterscraper).
 
 
-## twitterscraper-ruby vs. Twitter Search API
+## Twitter Search API vs. twitterscraper-ruby
 
 ### Twitter Search API
 
@@ -32,7 +32,7 @@ $ gem install twitterscraper-ruby
 Command line:
 
 ```shell script
-twitterscraper --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja --limit 100 --threads 10 --proxy --output output.json
+$ twitterscraper --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja --limit 100 --threads 10 --proxy --output output.json
 ```
 
 From Within Ruby:
