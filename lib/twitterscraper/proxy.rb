@@ -17,13 +17,15 @@ module Twitterscraper
           reload
         end
         @cur_index += 1
-        item = @items[@cur_index - 1]
-        Twitterscraper.logger.info("Using proxy #{item}")
-        item
+        @items[@cur_index - 1]
       end
 
       def size
         @items.size
+      end
+
+      def empty?
+        @items.empty?
       end
 
       private
@@ -51,7 +53,6 @@ module Twitterscraper
         proxies << ip + ':' + port
       end
 
-      Twitterscraper.logger.debug "Fetch #{proxies.size} proxies"
       proxies.shuffle
     rescue => e
       if (retries -= 1) > 0

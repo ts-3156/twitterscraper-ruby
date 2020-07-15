@@ -44,11 +44,15 @@ module Twitterscraper
 
     def get_single_page(url, headers, proxies, timeout = 6, retries = 30)
       return nil if stop_requested?
-      Twitterscraper::Http.get(url, headers, proxies.sample, timeout)
+      unless proxies.empty?
+        proxy = proxies.sample
+        logger.info("Using proxy #{proxy}")
+      end
+      Http.get(url, headers, proxy, timeout)
     rescue => e
       logger.debug "query_single_page: #{e.inspect}"
       if (retries -= 1) > 0
-        logger.info("Retrying... (Attempts left: #{retries - 1})")
+        logger.info "Retrying... (Attempts left: #{retries - 1})"
         retry
       else
         raise
@@ -71,19 +75,19 @@ module Twitterscraper
     end
 
     def query_single_page(query, lang, pos, from_user = false, headers: [], proxies: [])
-      logger.info("Querying #{query}")
+      logger.info "Querying #{query}"
       query = ERB::Util.url_encode(query)
 
       url = build_query_url(query, lang, pos, from_user)
       http_request = lambda do
-        logger.debug("Scraping tweets from #{url}")
+        logger.debug "Scraping tweets from #{url}"
         get_single_page(url, headers, proxies)
       end
 
       if cache_enabled?
         client = Cache.new
         if (response = client.read(url))
-          logger.debug('Fetching tweets from cache')
+          logger.debug 'Fetching tweets from cache'
         else
           response = http_request.call
           client.write(url, response)
@@ -164,12 +168,14 @@ module Twitterscraper
         new_tweets, new_pos = query_single_page(query, lang, pos, headers: headers, proxies: proxies)
         unless new_tweets.empty?
           daily_tweets.concat(new_tweets)
+          daily_tweets.uniq! { |t| t.tweet_id }
+
           @mutex.synchronize {
             @all_tweets.concat(new_tweets)
             @all_tweets.uniq! { |t| t.tweet_id }
           }
         end
-        logger.info("Got #{new_tweets.size} tweets (total #{@all_tweets.size})")
+        logger.info "Got #{new_tweets.size} tweets (total #{@all_tweets.size})"
 
         break unless new_pos
         break if daily_limit && daily_tweets.size >= daily_limit
@@ -179,7 +185,7 @@ module Twitterscraper
       end
 
       if @all_tweets.size >= limit
-        logger.info("Limit reached #{@all_tweets.size}")
+        logger.info "Limit reached #{@all_tweets.size}"
         @stop_requested = true
       end
     end
@@ -193,14 +199,15 @@ module Twitterscraper
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
       threads = queries.size if threads > queries.size
-      proxies = proxy ? Twitterscraper::Proxy::Pool.new : []
+      proxies = proxy ? Proxy::Pool.new : []
 
       validate_options!(queries[0], start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
 
-      logger.info("The number of threads #{threads}")
+      logger.debug "Fetch #{proxies.size} proxies" if proxy
+      logger.info "The number of threads #{threads}"
 
       headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
-      logger.info("Headers #{headers}")
+      logger.info "Headers #{headers}"
 
       @all_tweets = []
       @mutex = Mutex.new

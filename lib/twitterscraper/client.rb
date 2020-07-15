@@ -2,7 +2,7 @@ module Twitterscraper
   class Client
     include Query
 
-    def initialize(cache:)
+    def initialize(cache: false)
       @cache = cache
     end
 
