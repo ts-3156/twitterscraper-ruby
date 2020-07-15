@@ -75,9 +75,22 @@ module Twitterscraper
       query = ERB::Util.url_encode(query)
 
       url = build_query_url(query, lang, pos, from_user)
-      logger.debug("Scraping tweets from #{url}")
+      http_request = lambda do
+        logger.debug("Scraping tweets from #{url}")
+        get_single_page(url, headers, proxies)
+      end
 
-      response = get_single_page(url, headers, proxies)
+      if cache_enabled?
+        client = Cache.new
+        if (response = client.read(url))
+          logger.debug('Fetching tweets from cache')
+        else
+          response = http_request.call
+          client.write(url, response)
+        end
+      else
+        response = http_request.call
+      end
       return [], nil if response.nil?
 
       html, json_resp = parse_single_page(response, pos.nil?)

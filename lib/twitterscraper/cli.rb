@@ -23,7 +23,7 @@ module Twitterscraper
           threads: options['threads'],
           proxy: options['proxy']
       }
-      client = Twitterscraper::Client.new
+      client = Twitterscraper::Client.new(cache: options['cache'])
       tweets = client.query_tweets(options['query'], query_options)
       export(tweets) unless tweets.empty?
     end
@@ -66,6 +66,7 @@ module Twitterscraper
           'threads:',
           'output:',
           'format:',
+          'cache',
           'proxy',
           'pretty',
           'verbose',

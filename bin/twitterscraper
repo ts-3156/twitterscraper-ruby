@@ -7,7 +7,7 @@ begin
   cli.parse
   cli.run
 rescue => e
-  STDERR.puts e.message
+  STDERR.puts e.inspect
   STDERR.puts e.backtrace.join("\n")
   exit 1
 end
