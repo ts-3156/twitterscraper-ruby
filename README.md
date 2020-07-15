@@ -137,8 +137,8 @@ $ cat tweets.json | jq . | less
 | ------------- | ------------- | ------------- |
 | `-h`, `--help` | This option displays a summary of twitterscraper. | |
 | `--query` | Specify a keyword used during the search. | |
-| `--start_date` | Set the date from which twitterscraper-ruby should start scraping for your query. | |
-| `--end_date` | Set the enddate which twitterscraper-ruby should use to stop scraping for your query. | |
+| `--start_date` | Used as "since:yyyy-mm-dd for your query. This means "since the date". | |
+| `--end_date` | Used as "until:yyyy-mm-dd for your query. This means "before the date". | |
 | `--lang` | Retrieve tweets written in a specific language. | |
 | `--limit` | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
 | `--threads` | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |

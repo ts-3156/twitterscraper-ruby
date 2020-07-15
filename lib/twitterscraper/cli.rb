@@ -72,6 +72,7 @@ module Twitterscraper
           'verbose',
       )
 
+      options['start_date'] = Query::OLDEST_DATE if options['start_date'] == 'oldest'
       options['lang'] ||= ''
       options['limit'] = (options['limit'] || 100).to_i
       options['threads'] = (options['threads'] || 2).to_i
@@ -101,7 +102,7 @@ module Twitterscraper
     end
 
     def print_version
-      puts "twitterscraper-#{Twitterscraper::VERSION}"
+      puts "twitterscraper-#{VERSION}"
     end
   end
 end
