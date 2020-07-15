@@ -55,7 +55,7 @@ module Twitterscraper
         logger.info "Retrying... (Attempts left: #{retries - 1})"
         retry
       else
-        raise
+        raise Error.new("#{e.inspect} url=#{url}")
       end
     end
 
@@ -90,12 +90,12 @@ module Twitterscraper
           logger.debug 'Fetching tweets from cache'
         else
           response = http_request.call
-          client.write(url, response)
+          client.write(url, response) unless stop_requested?
         end
       else
         response = http_request.call
       end
-      return [], nil if response.nil?
+      return [], nil if response.nil? || response.empty?
 
       html, json_resp = parse_single_page(response, pos.nil?)
 
@@ -118,31 +118,31 @@ module Twitterscraper
 
     def validate_options!(query, start_date:, end_date:, lang:, limit:, threads:, proxy:)
       if query.nil? || query == ''
-        raise 'Please specify a search query.'
+        raise Error.new('Please specify a search query.')
       end
 
       if ERB::Util.url_encode(query).length >= 500
-        raise ':query must be a UTF-8, URL-encoded search query of 500 characters maximum, including operators.'
+        raise Error.new(':query must be a UTF-8, URL-encoded search query of 500 characters maximum, including operators.')
       end
 
       if start_date && end_date
         if start_date == end_date
-          raise 'Please specify different values for :start_date and :end_date.'
+          raise Error.new('Please specify different values for :start_date and :end_date.')
         elsif start_date > end_date
-          raise ':start_date must occur before :end_date.'
+          raise Error.new(':start_date must occur before :end_date.')
         end
       end
 
       if start_date
         if start_date < OLDEST_DATE
-          raise ":start_date must be greater than or equal to #{OLDEST_DATE}"
+          raise Error.new(":start_date must be greater than or equal to #{OLDEST_DATE}")
         end
       end
 
       if end_date
         today = Date.today
         if end_date > Date.today
-          raise ":end_date must be less than or equal to today(#{today})"
+          raise Error.new(":end_date must be less than or equal to today(#{today})")
         end
       end
     end
@@ -184,8 +184,8 @@ module Twitterscraper
         pos = new_pos
       end
 
-      if @all_tweets.size >= limit
-        logger.info "Limit reached #{@all_tweets.size}"
+      if !@stop_requested && @all_tweets.size >= limit
+        logger.warn "The limit you specified has been reached limit=#{limit} tweets=#{@all_tweets.size}"
         @stop_requested = true
       end
     end
@@ -214,6 +214,9 @@ module Twitterscraper
       @stop_requested = false
 
       if threads > 1
+        Thread.abort_on_exception = true
+        logger.debug "Set 'Thread.abort_on_exception' to true"
+
         Parallel.each(queries, in_threads: threads) do |query|
           main_loop(query, lang, limit, daily_limit, headers, proxies)
           raise Parallel::Break if stop_requested?

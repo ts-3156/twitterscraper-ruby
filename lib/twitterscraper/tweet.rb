@@ -59,12 +59,19 @@ module Twitterscraper
       def from_tweets_html(html)
         html.map do |tweet|
           from_tweet_html(tweet)
-        end
+        end.compact
       end
 
       def from_tweet_html(html)
+        screen_name = html.attr('data-screen-name')
+        tweet_id = html.attr('data-tweet-id')&.to_i
+
+        unless html.to_s.include?('js-tweet-text-container')
+          Twitterscraper.logger.warn "html doesn't include div.js-tweet-text-container url=https://twitter.com/#{screen_name}/status/#{tweet_id}"
+          return nil
+        end
+
         inner_html = Nokogiri::HTML(html.inner_html)
-        tweet_id = html.attr('data-tweet-id').to_i
         text = inner_html.xpath("//div[@class[contains(., 'js-tweet-text-container')]]/p[@class[contains(., 'js-tweet-text')]]").first.text
         links = inner_html.xpath("//a[@class[contains(., 'twitter-timeline-link')]]").map { |elem| elem.attr('data-expanded-url') }.select { |link| link && !link.include?('pic.twitter') }
         image_urls = inner_html.xpath("//div[@class[contains(., 'AdaptiveMedia-photoContainer')]]").map { |elem| elem.attr('data-image-url') }
@@ -89,7 +96,7 @@ module Twitterscraper
 
         timestamp = inner_html.xpath("//span[@class[contains(., 'js-short-timestamp')]]").first.attr('data-time').to_i
         new(
-            screen_name: html.attr('data-screen-name'),
+            screen_name: screen_name,
             name: html.attr('data-name'),
             user_id: html.attr('data-user-id').to_i,
             tweet_id: tweet_id,
