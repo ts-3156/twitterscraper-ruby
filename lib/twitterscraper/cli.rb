@@ -20,6 +20,7 @@ module Twitterscraper
           end_date: options['end_date'],
           lang: options['lang'],
           limit: options['limit'],
+          daily_limit: options['daily_limit'],
           threads: options['threads'],
           proxy: options['proxy']
       }
@@ -63,6 +64,7 @@ module Twitterscraper
           'end_date:',
           'lang:',
           'limit:',
+          'daily_limit:',
           'threads:',
           'output:',
           'format:',
@@ -75,6 +77,7 @@ module Twitterscraper
       options['start_date'] = Query::OLDEST_DATE if options['start_date'] == 'oldest'
       options['lang'] ||= ''
       options['limit'] = (options['limit'] || 100).to_i
+      options['daily_limit'] = options['daily_limit'].to_i if options['daily_limit']
       options['threads'] = (options['threads'] || 2).to_i
       options['format'] ||= 'json'
       options['output'] ||= "tweets.#{options['format']}"

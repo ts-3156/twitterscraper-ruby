@@ -156,12 +156,14 @@ module Twitterscraper
       end
     end
 
-    def main_loop(query, lang, limit, headers, proxies)
+    def main_loop(query, lang, limit, daily_limit, headers, proxies)
       pos = nil
+      daily_tweets = []
 
       while true
         new_tweets, new_pos = query_single_page(query, lang, pos, headers: headers, proxies: proxies)
         unless new_tweets.empty?
+          daily_tweets.concat(new_tweets)
           @mutex.synchronize {
             @all_tweets.concat(new_tweets)
             @all_tweets.uniq! { |t| t.tweet_id }
@@ -170,6 +172,7 @@ module Twitterscraper
         logger.info("Got #{new_tweets.size} tweets (total #{@all_tweets.size})")
 
         break unless new_pos
+        break if daily_limit && daily_tweets.size >= daily_limit
         break if @all_tweets.size >= limit
 
         pos = new_pos
@@ -185,7 +188,7 @@ module Twitterscraper
       @stop_requested
     end
 
-    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, threads: 2, proxy: false)
+    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, threads: 2, proxy: false)
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
@@ -205,12 +208,12 @@ module Twitterscraper
 
       if threads > 1
         Parallel.each(queries, in_threads: threads) do |query|
-          main_loop(query, lang, limit, headers, proxies)
+          main_loop(query, lang, limit, daily_limit, headers, proxies)
           raise Parallel::Break if stop_requested?
         end
       else
         queries.each do |query|
-          main_loop(query, lang, limit, headers, proxies)
+          main_loop(query, lang, limit, daily_limit, headers, proxies)
           break if stop_requested?
         end
       end
