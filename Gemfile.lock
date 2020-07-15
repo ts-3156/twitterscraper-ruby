@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    twitterscraper-ruby (0.10.0)
+    twitterscraper-ruby (0.11.0)
       nokogiri
       parallel
 
