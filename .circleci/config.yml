@@ -12,20 +12,20 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Update bundler
-        command: gem update bundler
+          name: Update bundler
+          command: gem update bundler
       - run:
-        name: Which bundler?
-        command: bundle -v
+          name: Which bundler?
+          command: bundle -v
       - restore_cache:
-        keys:
-          - gem-cache-v1-{{ arch }}-{{ .Branch }}-{{ checksum "Gemfile.lock" }}
-          - gem-cache-v1-{{ arch }}-{{ .Branch }}
-          - gem-cache-v1
+          keys:
+            - gem-cache-v1-{{ arch }}-{{ .Branch }}-{{ checksum "Gemfile.lock" }}
+            - gem-cache-v1-{{ arch }}-{{ .Branch }}
+            - gem-cache-v1
       - run: bundle install --path vendor/bundle
       - run: bundle clean
       - save_cache:
-          key: gem-cache-v1-{{ arch }}-{{ .Branch }}-{{ checksum "Gemfile.lock" }}
-          paths:
-            - vendor/bundle
+            key: gem-cache-v1-{{ arch }}-{{ .Branch }}-{{ checksum "Gemfile.lock" }}
+            paths:
+              - vendor/bundle
       - run: bundle exec rspec
