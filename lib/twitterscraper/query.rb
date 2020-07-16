@@ -116,7 +116,8 @@ module Twitterscraper
 
     OLDEST_DATE = Date.parse('2006-03-21')
 
-    def validate_options!(query, start_date:, end_date:, lang:, limit:, threads:, proxy:)
+    def validate_options!(queries, start_date:, end_date:, lang:, limit:, threads:, proxy:)
+      query = queries[0]
       if query.nil? || query == ''
         raise Error.new('Please specify a search query.')
       end
@@ -198,10 +199,13 @@ module Twitterscraper
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
-      threads = queries.size if threads > queries.size
+      if threads > queries.size
+        logger.warn 'The maximum number of :threads is the number of dates between :start_date and :end_date.'
+        threads = queries.size
+      end
       proxies = proxy ? Proxy::Pool.new : []
 
-      validate_options!(queries[0], start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
+      validate_options!(queries, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
 
       logger.debug "Fetch #{proxies.size} proxies" if proxy
       logger.info "The number of threads #{threads}"
