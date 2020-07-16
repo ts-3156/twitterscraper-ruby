@@ -1,5 +1,6 @@
 # twitterscraper-ruby
 
+[![Build Status](https://circleci.com/gh/ts-3156/twitterscraper-ruby.svg?style=svg)](https://circleci.com/gh/ts-3156/twitterscraper-ruby)
 [![Gem Version](https://badge.fury.io/rb/twitterscraper-ruby.svg)](https://badge.fury.io/rb/twitterscraper-ruby)
 
 A gem to scrape https://twitter.com/search. This gem is inspired by [taspinar/twitterscraper](https://github.com/taspinar/twitterscraper).
