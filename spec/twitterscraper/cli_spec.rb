@@ -7,6 +7,7 @@ RSpec.describe Twitterscraper::Cli do
       it do
         result = subject
         expect(result['start_date']).to be_falsey
+        expect(result['end_date']).to be_falsey
         expect(result['lang']).to eq('')
         expect(result['limit']).to eq(100)
         expect(result['daily_limit']).to be_falsey
@@ -17,6 +18,16 @@ RSpec.describe Twitterscraper::Cli do
         expect(result['cache']).to be_truthy
         expect(result['proxy']).to be_truthy
       end
+    end
+
+    context '--start_date "2020-01-01" is specified' do
+      before { ARGV.concat(['--start_date', '2020-01-01']) }
+      it { expect(subject['start_date']).to eq('2020-01-01') }
+    end
+
+    context '--end_date "2020-01-02" is specified' do
+      before { ARGV.concat(['--end_date', '2020-01-02']) }
+      it { expect(subject['end_date']).to eq('2020-01-02') }
     end
 
     context '--cache false is specified' do
