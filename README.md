@@ -33,7 +33,7 @@ Command-line interface:
 
 ```shell script
 $ twitterscraper --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja \
-      --limit 100 --threads 10 --proxy --cache --output output.json
+      --limit 100 --threads 10 --output output.json
 ```
 
 From Within Ruby:
@@ -47,10 +47,9 @@ options = {
   lang:       'ja',
   limit:      100,
   threads:    10,
-  proxy:      true
 }
 
-client = Twitterscraper::Client.new
+client = Twitterscraper::Client.new(cache: true, proxy: true)
 tweets = client.query_tweets(KEYWORD, options)
 
 tweets.each do |tweet|
@@ -142,8 +141,8 @@ $ cat tweets.json | jq . | less
 | `--lang` | Retrieve tweets written in a specific language. | |
 | `--limit` | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
 | `--threads` | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
-| `--proxy` | Scrape https://twitter.com/search via proxies. | false |
-| `--cache` | Enable caching. | false |
+| `--proxy` | Scrape https://twitter.com/search via proxies. | true |
+| `--cache` | Enable caching. | true |
 | `--format` | The format of the output. | json |
 | `--output` | The name of the output file. | tweets.json |
 | `--verbose` | Print debug messages. | tweets.json |
