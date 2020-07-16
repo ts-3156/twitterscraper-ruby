@@ -116,7 +116,7 @@ module Twitterscraper
 
     OLDEST_DATE = Date.parse('2006-03-21')
 
-    def validate_options!(queries, start_date:, end_date:, lang:, limit:, threads:, proxy:)
+    def validate_options!(queries, start_date:, end_date:, lang:, limit:, threads:)
       query = queries[0]
       if query.nil? || query == ''
         raise Error.new('Please specify a search query.')
@@ -195,7 +195,7 @@ module Twitterscraper
       @stop_requested
     end
 
-    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, threads: 2, proxy: false)
+    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, threads: 2)
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
@@ -203,11 +203,18 @@ module Twitterscraper
         logger.warn 'The maximum number of :threads is the number of dates between :start_date and :end_date.'
         threads = queries.size
       end
-      proxies = proxy ? Proxy::Pool.new : []
+      if proxy_enabled?
+        proxies = Proxy::Pool.new
+        logger.debug "Fetch #{proxies.size} proxies"
+      else
+        proxies = []
+        logger.debug 'Proxy disabled'
+      end
+      logger.debug "Cache #{cache_enabled? ? 'enabled' : 'disabled'}"
 
-      validate_options!(queries, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads, proxy: proxy)
 
-      logger.debug "Fetch #{proxies.size} proxies" if proxy
+      validate_options!(queries, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads)
+
       logger.info "The number of threads #{threads}"
 
       headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}

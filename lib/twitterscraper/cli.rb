@@ -22,9 +22,8 @@ module Twitterscraper
           limit: options['limit'],
           daily_limit: options['daily_limit'],
           threads: options['threads'],
-          proxy: options['proxy']
       }
-      client = Twitterscraper::Client.new(cache: options['cache'])
+      client = Twitterscraper::Client.new(cache: options['cache'], proxy: options['proxy'])
       tweets = client.query_tweets(options['query'], query_options)
       export(tweets) unless tweets.empty?
     end
@@ -68,8 +67,8 @@ module Twitterscraper
           'threads:',
           'output:',
           'format:',
-          'cache',
-          'proxy',
+          'cache:',
+          'proxy:',
           'pretty',
           'verbose',
       )
@@ -81,6 +80,9 @@ module Twitterscraper
       options['threads'] = (options['threads'] || 2).to_i
       options['format'] ||= 'json'
       options['output'] ||= "tweets.#{options['format']}"
+
+      options['cache'] = options['cache'] != 'false'
+      options['proxy'] = options['proxy'] != 'false'
 
       options
     end
