@@ -21,6 +21,7 @@ module Twitterscraper
           lang: options['lang'],
           limit: options['limit'],
           daily_limit: options['daily_limit'],
+          order: options['order'],
           threads: options['threads'],
       }
       client = Twitterscraper::Client.new(cache: options['cache'], proxy: options['proxy'])
@@ -64,6 +65,7 @@ module Twitterscraper
           'lang:',
           'limit:',
           'daily_limit:',
+          'order:',
           'threads:',
           'output:',
           'format:',
@@ -79,6 +81,7 @@ module Twitterscraper
       options['daily_limit'] = options['daily_limit'].to_i if options['daily_limit']
       options['threads'] = (options['threads'] || 2).to_i
       options['format'] ||= 'json'
+      options['order'] ||= 'desc'
       options['output'] ||= "tweets.#{options['format']}"
 
       options['cache'] = options['cache'] != 'false'

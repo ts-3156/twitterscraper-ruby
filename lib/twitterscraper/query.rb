@@ -195,7 +195,7 @@ module Twitterscraper
       @stop_requested
     end
 
-    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, threads: 2)
+    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, order: 'desc', threads: 2)
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
@@ -239,7 +239,7 @@ module Twitterscraper
         end
       end
 
-      @all_tweets.sort_by { |tweet| -tweet.created_at.to_i }
+      @all_tweets.sort_by { |tweet| (order == 'desc' ? -1 : 1) * tweet.created_at.to_i }
     end
   end
 end

@@ -141,6 +141,7 @@ $ cat tweets.json | jq . | less
 | `--end_date` | Used as "until:yyyy-mm-dd for your query. This means "before the date". | |
 | `--lang` | Retrieve tweets written in a specific language. | |
 | `--limit` | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
+| `--order` | Sort order of the results. | desc |
 | `--threads` | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
 | `--proxy` | Scrape https://twitter.com/search via proxies. | true |
 | `--cache` | Enable caching. | true |
