@@ -12,6 +12,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Update bundler
+          command: gem update bundler
+      - run:
           name: Which bundler?
           command: bundle -v
       - ruby/bundle-install
