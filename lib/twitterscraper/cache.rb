@@ -4,7 +4,7 @@ require 'digest/md5'
 module Twitterscraper
   class Cache
     def initialize()
-      @ttl = 3600 # 1 hour
+      @ttl = 86400 # 1 day
       @dir = 'cache'
       Dir.mkdir(@dir) unless File.exist?(@dir)
     end
@@ -23,6 +23,12 @@ module Twitterscraper
       entry = Entry.new(key, value, Time.now)
       file = File.join(@dir, key)
       File.write(file, entry.to_json)
+    end
+
+    def delete(key)
+      key = cache_key(key)
+      file = File.join(@dir, key)
+      File.delete(file) if File.exist?(file)
     end
 
     def fetch(key, &block)

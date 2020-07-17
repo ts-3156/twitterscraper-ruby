@@ -69,7 +69,6 @@ module Twitterscraper
       else
         json_resp = JSON.parse(text)
         items_html = json_resp['items_html'] || ''
-        logger.warn json_resp['message'] if json_resp['message'] # Sorry, you are rate limited.
       end
 
       [items_html, json_resp]
@@ -99,6 +98,11 @@ module Twitterscraper
       return [], nil if response.nil? || response.empty?
 
       html, json_resp = parse_single_page(response, pos.nil?)
+
+      if json_resp && json_resp['message']
+        logger.warn json_resp['message'] # Sorry, you are rate limited.
+        Cache.new.delete(url) if cache_enabled?
+      end
 
       tweets = Tweet.from_html(html)
 
