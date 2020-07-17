@@ -28,7 +28,7 @@ module Twitterscraper
         'max_position=__POS__&reset_error_state=false'
 
     def build_query_url(query, lang, type, pos)
-      if type == 'user'
+      if type.user?
         if pos
           RELOAD_URL_USER.sub('__USER__', query).sub('__POS__', pos.to_s)
         else
@@ -108,7 +108,7 @@ module Twitterscraper
 
       if json_resp
         [tweets, json_resp['min_position']]
-      elsif type
+      elsif type.user?
         [tweets, tweets[-1].tweet_id]
       else
         [tweets, "TWEET-#{tweets[-1].tweet_id}-#{tweets[0].tweet_id}"]
@@ -200,6 +200,7 @@ module Twitterscraper
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
+      type = Type.new(type)
       if threads > queries.size
         logger.warn 'The maximum number of :threads is the number of dates between :start_date and :end_date.'
         threads = queries.size
