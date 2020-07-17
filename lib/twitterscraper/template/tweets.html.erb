@@ -22,7 +22,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.31/moment-timezone-with-data.min.js" integrity="sha512-HZcf3uHWA+Y2P5KNv+F/xa87/flKVP92kUTe/KXjU8URPshczF1Dx+cL5bw0VBGhmqWAK0UbhcqxBbyiNtAnWQ==" crossorigin="anonymous"></script>
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
   <script>
-      document.addEventListener("DOMContentLoaded", function () {
+      function drawChart() {
           Highcharts.setOptions({
               time: {
                   timezone: moment.tz.guess()
@@ -31,7 +31,7 @@
 
           Highcharts.stockChart('chart', {
               title: {
-                  text: '<%= tweets.size %> tweets of <%= chart_name %>'
+                  text: '<%= tweets_size %> tweets of <%= chart_name %>'
               },
               series: [{
                   data: <%= chart_data %>
@@ -41,6 +41,10 @@
               exporting: {enabled: false},
               credits: {enabled: false}
           });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+          drawChart();
       });
   </script>
 
@@ -59,13 +63,13 @@
 <div id="chart"></div>
 
 <div class="tweets-container">
-  <% tweets.take(30).each do |tweet| %>
+  <% tweets.each do |tweet| %>
     <blockquote class="twitter-tweet">
       <a href="<%= tweet.tweet_url %>"></a>
     </blockquote>
   <% end %>
 
-  <% if tweets.size > 30 %>
+  <% if tweets_size > tweets.size %>
     <div>and more!</div>
   <% end %>
 </div>

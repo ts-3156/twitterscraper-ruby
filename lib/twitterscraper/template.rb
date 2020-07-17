@@ -7,7 +7,8 @@ module Twitterscraper
       template.result_with_hash(
           chart_name: name,
           chart_data: chart_data(tweets).to_json,
-          tweets: tweets
+          tweets_size: tweets.size,
+          tweets: tweets.take(50)
       )
     end
 
