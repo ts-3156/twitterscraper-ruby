@@ -1,12 +1,11 @@
 module Twitterscraper
-  module Template
-    module_function
-
-    def tweets_embedded_html(tweets)
+  class Template
+    def tweets_embedded_html(name, tweets)
       path = File.join(File.dirname(__FILE__), 'template/tweets.html.erb')
       template = ERB.new(File.read(path))
 
       template.result_with_hash(
+          chart_name: name,
           chart_data: chart_data(tweets).to_json,
           tweets: tweets
       )

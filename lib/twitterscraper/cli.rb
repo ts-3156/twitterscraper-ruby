@@ -27,16 +27,16 @@ module Twitterscraper
       }
       client = Twitterscraper::Client.new(cache: options['cache'], proxy: options['proxy'])
       tweets = client.query_tweets(options['query'], query_options)
-      export(tweets) unless tweets.empty?
+      export(options['query'], tweets) unless tweets.empty?
     end
 
-    def export(tweets)
+    def export(name, tweets)
       write_json = lambda { File.write(options['output'], generate_json(tweets)) }
 
       if options['format'] == 'json'
         write_json.call
       elsif options['format'] == 'html'
-        File.write('tweets.html', Template.tweets_embedded_html(tweets))
+        File.write('tweets.html', Template.new.tweets_embedded_html(name, tweets))
       else
         write_json.call
       end
