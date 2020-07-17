@@ -30,33 +30,37 @@ $ gem install twitterscraper-ruby
 
 ## Usage
 
-Command-line interface:
+##### Command-line interface:
+
+Returns a collection of relevant tweets matching a specified query.
 
 ```shell script
-# Returns a collection of relevant tweets matching a specified query.
 $ twitterscraper --type search --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja \
       --limit 100 --threads 10 --output tweets.json
 ```
 
+Returns a collection of the most recent tweets posted by the user indicated by the screen_name
+
 ```shell script
-# Returns a collection of the most recent tweets posted by the user indicated by the screen_name
 $ twitterscraper --type user --query SCREEN_NAME --limit 100 --output tweets.json
 ```
 
-From Within Ruby:
+##### From Within Ruby:
 
 ```ruby
 require 'twitterscraper'
 client = Twitterscraper::Client.new(cache: true, proxy: true)
 ```
 
+Returns a collection of relevant tweets matching a specified query.
+
 ```ruby
-# Returns a collection of relevant tweets matching a specified query.
 tweets = client.search(KEYWORD, start_date: '2020-06-01', end_date: '2020-06-30', lang: 'ja', limit: 100, threads: 10)
 ```
 
+Returns a collection of the most recent tweets posted by the user indicated by the screen_name
+
 ```ruby
-# Returns a collection of the most recent tweets posted by the user indicated by the screen_name
 tweets = client.user_timeline(SCREEN_NAME, limit: 100)
 ```
 
@@ -72,8 +76,9 @@ tweets.each do |tweet|
   puts tweet.tweet_url
   puts tweet.created_at
 
+  attr_names = hash.keys
   hash = tweet.attrs
-  puts hash.keys
+  json = tweet.to_json
 end
 ```
 
@@ -141,22 +146,22 @@ $ cat tweets.json | jq . | less
 
 ## CLI Options
 
-| Option | Description | Default |
-| ------------- | ------------- | ------------- |
-| `-h`, `--help` | This option displays a summary of twitterscraper. | |
-| `--type` | Specify a search type. | search |
-| `--query` | Specify a keyword used during the search. | |
-| `--start_date` | Used as "since:yyyy-mm-dd for your query. This means "since the date". | |
-| `--end_date` | Used as "until:yyyy-mm-dd for your query. This means "before the date". | |
-| `--lang` | Retrieve tweets written in a specific language. | |
-| `--limit` | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
-| `--order` | Sort order of the results. | desc |
-| `--threads` | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
-| `--proxy` | Scrape https://twitter.com/search via proxies. | true |
-| `--cache` | Enable caching. | true |
-| `--format` | The format of the output. | json |
-| `--output` | The name of the output file. | tweets.json |
-| `--verbose` | Print debug messages. | tweets.json |
+| Option | Type | Description | Value |
+| ------------- | ------------- | ------------- | ------------- |
+| `--help`       | string  | This option displays a summary of twitterscraper. | |
+| `--type`       | string  | Specify a search type. | search(default) or user |
+| `--query`      | string  | Specify a keyword used during the search. | |
+| `--start_date` | string  | Used as "since:yyyy-mm-dd for your query. This means "since the date". | |
+| `--end_date`   | string  | Used as "until:yyyy-mm-dd for your query. This means "before the date". | |
+| `--lang`       | string  | Retrieve tweets written in a specific language. | |
+| `--limit`      | integer | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
+| `--order`      | string  | Sort a order of the results. | desc(default) or asc |
+| `--threads`    | integer | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
+| `--proxy`      | boolean | Scrape https://twitter.com/search via proxies. | true(default) or false |
+| `--cache`      | boolean | Enable caching. | true(default) or false |
+| `--format`     | string  | The format of the output. | json(default) or html |
+| `--output`     | string  | The name of the output file. | tweets.json |
+| `--verbose`    |         | Print debug messages. | |
 
 
 ## Contributing
