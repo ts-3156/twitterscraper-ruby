@@ -8,12 +8,12 @@ A gem to scrape https://twitter.com/search. This gem is inspired by [taspinar/tw
 
 ## Twitter Search API vs. twitterscraper-ruby
 
-### Twitter Search API
+#### Twitter Search API
 
 - The number of tweets: 180 - 450 requests/15 minutes (18,000 - 45,000 tweets/15 minutes)
 - The time window: the past 7 days
 
-### twitterscraper-ruby
+#### twitterscraper-ruby
 
 - The number of tweets: Unlimited
 - The time window: from 2006-3-21 to today
@@ -30,7 +30,7 @@ $ gem install twitterscraper-ruby
 
 ## Usage
 
-##### Command-line interface:
+#### Command-line interface:
 
 Returns a collection of relevant tweets matching a specified query.
 
@@ -45,7 +45,7 @@ Returns a collection of the most recent tweets posted by the user indicated by t
 $ twitterscraper --type user --query SCREEN_NAME --limit 100 --output tweets.json
 ```
 
-##### From Within Ruby:
+#### From Within Ruby:
 
 ```ruby
 require 'twitterscraper'
@@ -65,6 +65,14 @@ tweets = client.user_timeline(SCREEN_NAME, limit: 100)
 ```
 
 
+## Examples
+
+```shell script
+$ twitterscraper --query twitter --limit 1000
+$ cat tweets.json | jq . | less
+```
+
+
 ## Attributes
 
 ### Tweet
@@ -80,6 +88,33 @@ tweets.each do |tweet|
   hash = tweet.attrs
   json = tweet.to_json
 end
+```
+
+```json
+[
+  {
+      "screen_name": "@name",
+      "name": "Name",
+      "user_id": 12340000,
+      "tweet_id": 1234000000000000,
+      "text": "Thanks Twitter!",
+      "links": [],
+      "hashtags": [],
+      "image_urls": [],
+      "video_url": null,
+      "has_media": null,
+      "likes": 10,
+      "retweets": 20,
+      "replies": 0,
+      "is_replied": false,
+      "is_reply_to": false,
+      "parent_tweet_id": null,
+      "reply_to_users": [],
+      "tweet_url": "https://twitter.com/name/status/1234000000000000",
+      "timestamp": 1594793000,
+      "created_at": "2020-07-15 00:00:00 +0000"
+    }
+]
 ```
 
 - screen_name
@@ -122,27 +157,6 @@ end
 
 Search operators documentation is in [Standard search operators](https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators).
 
-
-## Examples
-
-```shell script
-$ twitterscraper --query twitter --limit 1000
-$ cat tweets.json | jq . | less
-```
-
-```json
-[
-  {
-    "screen_name": "@screenname",
-    "name": "name",
-    "user_id": 1194529546483000000,
-    "tweet_id": 1282659891992000000,
-    "tweet_url": "https://twitter.com/screenname/status/1282659891992000000",
-    "created_at": "2020-07-13 12:00:00 +0000",
-    "text": "Thanks Twitter!"
-  }
-]
-```
 
 ## CLI Options
 
