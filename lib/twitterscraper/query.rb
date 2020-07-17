@@ -27,8 +27,8 @@ module Twitterscraper
         'include_available_features=1&include_entities=1&' +
         'max_position=__POS__&reset_error_state=false'
 
-    def build_query_url(query, lang, from_user, pos)
-      if from_user
+    def build_query_url(query, lang, type, pos)
+      if type == 'user'
         if pos
           RELOAD_URL_USER.sub('__USER__', query).sub('__POS__', pos.to_s)
         else
@@ -51,7 +51,7 @@ module Twitterscraper
       end
       Http.get(url, headers, proxy, timeout)
     rescue => e
-      logger.debug "query_single_page: #{e.inspect}"
+      logger.debug "get_single_page: #{e.inspect}"
       if (retries -= 1) > 0
         logger.info "Retrying... (Attempts left: #{retries - 1})"
         retry
@@ -79,7 +79,7 @@ module Twitterscraper
       logger.info "Querying #{query}"
       query = ERB::Util.url_encode(query)
 
-      url = build_query_url(query, lang, type == 'user', pos)
+      url = build_query_url(query, lang, type, pos)
       http_request = lambda do
         logger.debug "Scraping tweets from #{url}"
         get_single_page(url, headers, proxies)

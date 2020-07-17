@@ -5,6 +5,8 @@
 
 A gem to scrape https://twitter.com/search. This gem is inspired by [taspinar/twitterscraper](https://github.com/taspinar/twitterscraper).
 
+Please feel free to ask [@ts_3156](https://twitter.com/ts_3156) if you have any questions.
+
 
 ## Twitter Search API vs. twitterscraper-ruby
 
