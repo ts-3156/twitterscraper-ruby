@@ -22,23 +22,24 @@ module Twitterscraper
     RELOAD_URL = 'https://twitter.com/i/search/timeline?f=tweets&vertical=' +
         'default&include_available_features=1&include_entities=1&' +
         'reset_error_state=false&src=typd&max_position=__POS__&q=__QUERY__&l=__LANG__'
-    INIT_URL_USER = 'https://twitter.com/{u}'
-    RELOAD_URL_USER = 'https://twitter.com/i/profiles/show/{u}/timeline/tweets?' +
+    INIT_URL_USER = 'https://twitter.com/__USER__'
+    RELOAD_URL_USER = 'https://twitter.com/i/profiles/show/__USER__/timeline/tweets?' +
         'include_available_features=1&include_entities=1&' +
-        'max_position={pos}&reset_error_state=false'
+        'max_position=__POS__&reset_error_state=false'
 
-    def build_query_url(query, lang, pos, from_user = false)
-      # if from_user
-      #   if !pos
-      #     INIT_URL_USER.format(u = query)
-      #   else
-      #     RELOAD_URL_USER.format(u = query, pos = pos)
-      #   end
-      # end
-      if pos
-        RELOAD_URL.sub('__QUERY__', query).sub('__LANG__', lang.to_s).sub('__POS__', pos)
+    def build_query_url(query, lang, from_user, pos)
+      if from_user
+        if pos
+          RELOAD_URL_USER.sub('__USER__', query).sub('__POS__', pos.to_s)
+        else
+          INIT_URL_USER.sub('__USER__', query)
+        end
       else
-        INIT_URL.sub('__QUERY__', query).sub('__LANG__', lang.to_s)
+        if pos
+          RELOAD_URL.sub('__QUERY__', query).sub('__LANG__', lang.to_s).sub('__POS__', pos)
+        else
+          INIT_URL.sub('__QUERY__', query).sub('__LANG__', lang.to_s)
+        end
       end
     end
 
@@ -74,11 +75,11 @@ module Twitterscraper
       [items_html, json_resp]
     end
 
-    def query_single_page(query, lang, pos, from_user = false, headers: [], proxies: [])
+    def query_single_page(query, lang, type, pos, headers: [], proxies: [])
       logger.info "Querying #{query}"
       query = ERB::Util.url_encode(query)
 
-      url = build_query_url(query, lang, pos, from_user)
+      url = build_query_url(query, lang, type == 'user', pos)
       http_request = lambda do
         logger.debug "Scraping tweets from #{url}"
         get_single_page(url, headers, proxies)
@@ -107,8 +108,8 @@ module Twitterscraper
 
       if json_resp
         [tweets, json_resp['min_position']]
-      elsif from_user
-        raise NotImplementedError
+      elsif type
+        [tweets, tweets[-1].tweet_id]
       else
         [tweets, "TWEET-#{tweets[-1].tweet_id}-#{tweets[0].tweet_id}"]
       end
@@ -116,7 +117,7 @@ module Twitterscraper
 
     OLDEST_DATE = Date.parse('2006-03-21')
 
-    def validate_options!(queries, start_date:, end_date:, lang:, limit:, threads:)
+    def validate_options!(queries, type:, start_date:, end_date:, lang:, limit:, threads:)
       query = queries[0]
       if query.nil? || query == ''
         raise Error.new('Please specify a search query.')
@@ -161,12 +162,12 @@ module Twitterscraper
       end
     end
 
-    def main_loop(query, lang, limit, daily_limit, headers, proxies)
+    def main_loop(query, lang, type, limit, daily_limit, headers, proxies)
       pos = nil
       daily_tweets = []
 
       while true
-        new_tweets, new_pos = query_single_page(query, lang, pos, headers: headers, proxies: proxies)
+        new_tweets, new_pos = query_single_page(query, lang, type, pos, headers: headers, proxies: proxies)
         unless new_tweets.empty?
           daily_tweets.concat(new_tweets)
           daily_tweets.uniq! { |t| t.tweet_id }
@@ -195,7 +196,7 @@ module Twitterscraper
       @stop_requested
     end
 
-    def query_tweets(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, order: 'desc', threads: 2)
+    def query_tweets(query, type: 'search', start_date: nil, end_date: nil, lang: nil, limit: 100, daily_limit: nil, order: 'desc', threads: 2)
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
       queries = build_queries(query, start_date, end_date)
@@ -213,7 +214,7 @@ module Twitterscraper
       logger.debug "Cache #{cache_enabled? ? 'enabled' : 'disabled'}"
 
 
-      validate_options!(queries, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads)
+      validate_options!(queries, type: type, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads)
 
       logger.info "The number of threads #{threads}"
 
@@ -229,17 +230,25 @@ module Twitterscraper
         logger.debug "Set 'Thread.abort_on_exception' to true"
 
         Parallel.each(queries, in_threads: threads) do |query|
-          main_loop(query, lang, limit, daily_limit, headers, proxies)
+          main_loop(query, lang, type, limit, daily_limit, headers, proxies)
           raise Parallel::Break if stop_requested?
         end
       else
         queries.each do |query|
-          main_loop(query, lang, limit, daily_limit, headers, proxies)
+          main_loop(query, lang, type, limit, daily_limit, headers, proxies)
           break if stop_requested?
         end
       end
 
       @all_tweets.sort_by { |tweet| (order == 'desc' ? -1 : 1) * tweet.created_at.to_i }
+    end
+
+    def search(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, order: 'desc', threads: 2)
+      query_tweets(query, type: 'search', start_date: start_date, end_date: end_date, lang: lang, limit: limit, daily_limit: daily_limit, order: order, threads: threads)
+    end
+
+    def user_timeline(screen_name, limit: 100, order: 'desc')
+      query_tweets(screen_name, type: 'user', start_date: nil, end_date: nil, lang: nil, limit: limit, daily_limit: nil, order: order, threads: 1)
     end
   end
 end

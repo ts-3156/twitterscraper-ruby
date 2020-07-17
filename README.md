@@ -33,26 +33,39 @@ $ gem install twitterscraper-ruby
 Command-line interface:
 
 ```shell script
-$ twitterscraper --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja \
-      --limit 100 --threads 10 --output output.json
+# Returns a collection of relevant tweets matching a specified query.
+$ twitterscraper --type search --query KEYWORD --start_date 2020-06-01 --end_date 2020-06-30 --lang ja \
+      --limit 100 --threads 10 --output tweets.json
+```
+
+```shell script
+# Returns a collection of the most recent tweets posted by the user indicated by the screen_name
+$ twitterscraper --type user --query SCREEN_NAME --limit 100 --output tweets.json
 ```
 
 From Within Ruby:
 
 ```ruby
 require 'twitterscraper'
-
-options = {
-  start_date: '2020-06-01',
-  end_date:   '2020-06-30',
-  lang:       'ja',
-  limit:      100,
-  threads:    10,
-}
-
 client = Twitterscraper::Client.new(cache: true, proxy: true)
-tweets = client.query_tweets(KEYWORD, options)
+```
 
+```ruby
+# Returns a collection of relevant tweets matching a specified query.
+tweets = client.search(KEYWORD, start_date: '2020-06-01', end_date: '2020-06-30', lang: 'ja', limit: 100, threads: 10)
+```
+
+```ruby
+# Returns a collection of the most recent tweets posted by the user indicated by the screen_name
+tweets = client.user_timeline(SCREEN_NAME, limit: 100)
+```
+
+
+## Attributes
+
+### Tweet
+
+```ruby
 tweets.each do |tweet|
   puts tweet.tweet_id
   puts tweet.text
@@ -63,11 +76,6 @@ tweets.each do |tweet|
   puts hash.keys
 end
 ```
-
-
-## Attributes
-
-### Tweet
 
 - screen_name
 - name
@@ -136,6 +144,7 @@ $ cat tweets.json | jq . | less
 | Option | Description | Default |
 | ------------- | ------------- | ------------- |
 | `-h`, `--help` | This option displays a summary of twitterscraper. | |
+| `--type` | Specify a search type. | search |
 | `--query` | Specify a keyword used during the search. | |
 | `--start_date` | Used as "since:yyyy-mm-dd for your query. This means "since the date". | |
 | `--end_date` | Used as "until:yyyy-mm-dd for your query. This means "before the date". | |

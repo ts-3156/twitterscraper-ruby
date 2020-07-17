@@ -16,6 +16,7 @@ module Twitterscraper
       print_version || return if print_version?
 
       query_options = {
+          type: options['type'],
           start_date: options['start_date'],
           end_date: options['end_date'],
           lang: options['lang'],
@@ -59,6 +60,7 @@ module Twitterscraper
           'help',
           'v',
           'version',
+          'type:',
           'query:',
           'start_date:',
           'end_date:',
@@ -75,6 +77,7 @@ module Twitterscraper
           'verbose',
       )
 
+      options['type'] ||= 'search'
       options['start_date'] = Query::OLDEST_DATE if options['start_date'] == 'oldest'
       options['lang'] ||= ''
       options['limit'] = (options['limit'] || 100).to_i
