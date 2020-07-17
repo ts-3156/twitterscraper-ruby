@@ -3,46 +3,25 @@ module Twitterscraper
     module_function
 
     def tweets_embedded_html(tweets)
-      tweets_html = tweets.map { |t| EMBED_TWEET_HTML.sub('__TWEET_URL__', t.tweet_url) }
-      EMBED_TWEETS_HTML.sub('__TWEETS__', tweets_html.join)
+      path = File.join(File.dirname(__FILE__), 'template/tweets.html.erb')
+      template = ERB.new(File.read(path))
+
+      template.result_with_hash(
+          chart_data: chart_data(tweets).to_json,
+          tweets: tweets
+      )
     end
 
-    EMBED_TWEET_HTML = <<~'HTML'
-      <blockquote class="twitter-tweet">
-        <a href="__TWEET_URL__"></a>
-      </blockquote>
-    HTML
+    def chart_data(tweets)
+      data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
+        t = tweet.created_at
+        time = Time.new(t.year, t.month, t.day, t.hour, t.min, 0, '+00:00')
+        memo[time.to_i] += 1
+      end
 
-    EMBED_TWEETS_HTML = <<~'HTML'
-      <html>
-        <head>
-          <style type=text/css>
-            .twitter-tweet {
-              margin: 30px auto 0 auto !important;
-            }
-          </style>
-          <script>
-            window.twttr = (function(d, s, id) {
-              var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
-              if (d.getElementById(id)) return t;
-              js = d.createElement(s);
-              js.id = id;
-              js.src = "https://platform.twitter.com/widgets.js";
-              fjs.parentNode.insertBefore(js, fjs);
-
-              t._e = [];
-              t.ready = function(f) {
-                  t._e.push(f);
-              };
-
-              return t;
-            }(document, "script", "twitter-wjs"));
-          </script>
-        </head>
-        <body>
-          __TWEETS__
-        </body>
-      </html>
-    HTML
+      data.sort_by { |k, v| k }.map do |timestamp, count|
+        [timestamp * 1000, count]
+      end
+    end
   end
 end

@@ -1,0 +1,66 @@
+<html>
+<head>
+  <script>
+      window.twttr = (function (d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function (f) {
+              t._e.push(f);
+          };
+
+          return t;
+      }(document, "script", "twitter-wjs"));
+  </script>
+
+  <script src="https://code.highcharts.com/stock/highstock.js"></script>
+  <script>
+      document.addEventListener("DOMContentLoaded", function () {
+          Highcharts.stockChart('chart', {
+              title: {
+                  text: 'Number of Tweets'
+              },
+              series: [{
+                  data: <%= chart_data %>
+              }],
+              scrollbar: {enabled: false},
+              navigator: {enabled: false},
+              exporting: {enabled: false},
+              credits: {enabled: false}
+          });
+      });
+  </script>
+
+  <style type=text/css>
+    .tweets-container {
+      max-width: 550px;
+      margin: 0 auto 0 auto;
+    }
+
+    .twitter-tweet {
+      margin: 15px 0 15px 0 !important;
+    }
+  </style>
+</head>
+<body>
+<div id="chart"></div>
+
+<div class="tweets-container">
+  <% tweets.take(30).each do |tweet| %>
+    <blockquote class="twitter-tweet">
+      <a href="<%= tweet.tweet_url %>"></a>
+    </blockquote>
+  <% end %>
+
+  <% if tweets.size > 30 %>
+    <div>and more!</div>
+  <% end %>
+</div>
+
+</body>
+</html>
