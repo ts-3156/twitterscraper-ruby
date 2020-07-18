@@ -76,9 +76,9 @@ module Twitterscraper
 
     def query_single_page(query, lang, type, pos, headers: [], proxies: [])
       logger.info "Querying #{query}"
-      query = ERB::Util.url_encode(query)
+      encoded_query = ERB::Util.url_encode(query)
 
-      url = build_query_url(query, lang, type, pos)
+      url = build_query_url(encoded_query, lang, type, pos)
       http_request = lambda do
         logger.debug "Scraping tweets from url=#{url}"
         get_single_page(url, headers, proxies)
@@ -91,6 +91,10 @@ module Twitterscraper
         else
           response = http_request.call
           client.write(url, response) unless stop_requested?
+        end
+        if @queries && query == @queries.last && pos.nil?
+          logger.debug "Delete a cache query=#{query}"
+          client.delete(url)
         end
       else
         response = http_request.call
@@ -170,7 +174,7 @@ module Twitterscraper
           end
         end
 
-        queries
+        @queries = queries
 
       elsif start_date
         [query + " since:#{start_date}"]
