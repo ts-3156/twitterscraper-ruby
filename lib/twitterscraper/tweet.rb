@@ -6,6 +6,7 @@ module Twitterscraper
         :screen_name,
         :name,
         :user_id,
+        :profile_image_url,
         :tweet_id,
         :text,
         :links,
@@ -51,6 +52,11 @@ module Twitterscraper
         end
       end
 
+      # .js-stream-item
+      #   .js-stream-tweet{data: {screen-name:, tweet-id:}}
+      #     .stream-item-header
+      #     .js-tweet-text-container
+      #     .stream-item-footer
       def from_html(text)
         html = Nokogiri::HTML(text)
         from_tweets_html(html.xpath("//li[@class[contains(., 'js-stream-item')]]/div[@class[contains(., 'js-stream-tweet')]]"))
@@ -72,6 +78,8 @@ module Twitterscraper
         end
 
         inner_html = Nokogiri::HTML(html.inner_html)
+
+        profile_image_url = inner_html.xpath("//img[@class[contains(., 'js-action-profile-avatar')]]").first.attr('src').gsub(/_bigger/, '')
         text = inner_html.xpath("//div[@class[contains(., 'js-tweet-text-container')]]/p[@class[contains(., 'js-tweet-text')]]").first.text
         links = inner_html.xpath("//a[@class[contains(., 'twitter-timeline-link')]]").map { |elem| elem.attr('data-expanded-url') }.select { |link| link && !link.include?('pic.twitter') }
         image_urls = inner_html.xpath("//div[@class[contains(., 'AdaptiveMedia-photoContainer')]]").map { |elem| elem.attr('data-image-url') }
@@ -99,6 +107,7 @@ module Twitterscraper
             screen_name: screen_name,
             name: html.attr('data-name'),
             user_id: html.attr('data-user-id').to_i,
+            profile_image_url: profile_image_url,
             tweet_id: tweet_id,
             text: text,
             links: links,

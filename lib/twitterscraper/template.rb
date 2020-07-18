@@ -9,8 +9,8 @@ module Twitterscraper
           chart_data: chart_data(tweets).to_json,
           first_tweet: tweets.sort_by { |t| t.created_at.to_i }[0],
           last_tweet: tweets.sort_by { |t| t.created_at.to_i }[-1],
-          tweets_size: tweets.size,
-          tweets: tweets.take(50)
+          tweets: tweets,
+          convert_limit: 50,
       )
     end
 

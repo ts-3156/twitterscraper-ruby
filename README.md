@@ -98,6 +98,7 @@ end
       "screen_name": "@name",
       "name": "Name",
       "user_id": 12340000,
+      "profile_image_url": "https://pbs.twimg.com/profile_images/1826000000/0000.png",
       "tweet_id": 1234000000000000,
       "text": "Thanks Twitter!",
       "links": [],
@@ -122,6 +123,7 @@ end
 - screen_name
 - name
 - user_id
+- profile_image_url
 - tweet_id
 - text
 - links
@@ -173,6 +175,7 @@ Search operators documentation is in [Standard search operators](https://develop
 | `--limit`      | integer | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
 | `--order`      | string  | Sort a order of the results. | desc(default) or asc |
 | `--threads`    | integer | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
+| `--threads_granularity` | string | | auto |
 | `--proxy`      | boolean | Scrape https://twitter.com/search via proxies. | true(default) or false |
 | `--cache`      | boolean | Enable caching. | true(default) or false |
 | `--format`     | string  | The format of the output. | json(default) or html |
