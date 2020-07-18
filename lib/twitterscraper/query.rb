@@ -152,13 +152,19 @@ module Twitterscraper
         # date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
 
         queries = []
-        time = start_date.to_time
+        time = Time.utc(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+        end_time = Time.utc(end_date.year, end_date.month, end_date.day, 0, 0, 0)
+
         while true
-          queries << (query + " since:#{time.strftime('%Y-%m-%d_%H:00:00')}_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H:00:00')}_UTC")
+          if time < Time.now.utc
+            queries << (query + " since:#{time.strftime('%Y-%m-%d_%H:00:00')}_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H:00:00')}_UTC")
+          end
           time += 3600
-          break if time >= end_date.to_time
+          break if time >= end_time
         end
+
         queries
+
       elsif start_date
         [query + " since:#{start_date}"]
       elsif end_date
