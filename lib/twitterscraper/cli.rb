@@ -36,7 +36,7 @@ module Twitterscraper
       if options['format'] == 'json'
         write_json.call
       elsif options['format'] == 'html'
-        File.write('tweets.html', Template.new.tweets_embedded_html(name, tweets))
+        File.write(options['output'], Template.new.tweets_embedded_html(name, tweets))
       else
         write_json.call
       end

@@ -155,8 +155,17 @@ module Twitterscraper
 
     def build_queries(query, start_date, end_date)
       if start_date && end_date
-        date_range = start_date.upto(end_date - 1)
-        date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+        # date_range = start_date.upto(end_date - 1)
+        # date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+
+        queries = []
+        time = start_date.to_time
+        while true
+          queries << (query + " since:#{time.strftime('%Y-%m-%d_%H:00:00')}_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H:00:00')}_UTC")
+          time += 3600
+          break if time >= end_date.to_time
+        end
+        queries
       elsif start_date
         [query + " since:#{start_date}"]
       elsif end_date
@@ -206,7 +215,6 @@ module Twitterscraper
       queries = build_queries(query, start_date, end_date)
       type = Type.new(type)
       if threads > queries.size
-        logger.warn 'The maximum number of :threads is the number of dates between :start_date and :end_date.'
         threads = queries.size
       end
       if proxy_enabled?
