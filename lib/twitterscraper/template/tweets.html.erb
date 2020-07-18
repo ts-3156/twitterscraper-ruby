@@ -34,7 +34,7 @@
                   text: '<%= tweets_size %> tweets of <%= chart_name %>'
               },
               subtitle: {
-                  text: 'since:<%= first_tweet.created_at %> until:<%= last_tweet.created_at %>'
+                  text: 'since:<%= first_tweet.created_at.localtime %> until:<%= last_tweet.created_at.localtime %>'
               },
               series: [{
                   data: <%= chart_data %>

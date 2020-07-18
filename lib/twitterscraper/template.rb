@@ -7,8 +7,8 @@ module Twitterscraper
       template.result_with_hash(
           chart_name: name,
           chart_data: chart_data(tweets).to_json,
-          first_tweet: tweets[0],
-          last_tweet: tweets[-1],
+          first_tweet: tweets.sort_by { |t| t.created_at.to_i }[0],
+          last_tweet: tweets.sort_by { |t| t.created_at.to_i }[-1],
           tweets_size: tweets.size,
           tweets: tweets.take(50)
       )

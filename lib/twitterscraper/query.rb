@@ -225,7 +225,6 @@ module Twitterscraper
       end
       logger.debug "Cache #{cache_enabled? ? 'enabled' : 'disabled'}"
 
-
       validate_options!(queries, type: type, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads)
 
       logger.info "The number of threads #{threads}"
