@@ -10,7 +10,7 @@ module Twitterscraper
           first_tweet: tweets.sort_by { |t| t.created_at.to_i }[0],
           last_tweet: tweets.sort_by { |t| t.created_at.to_i }[-1],
           tweets: tweets,
-          convert_limit: 50,
+          convert_limit: 30,
       )
     end
 

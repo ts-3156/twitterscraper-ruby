@@ -80,14 +80,14 @@ module Twitterscraper
 
       url = build_query_url(query, lang, type, pos)
       http_request = lambda do
-        logger.debug "Scraping tweets from #{url}"
+        logger.debug "Scraping tweets from url=#{url}"
         get_single_page(url, headers, proxies)
       end
 
       if cache_enabled?
         client = Cache.new
         if (response = client.read(url))
-          logger.debug 'Fetching tweets from cache'
+          logger.debug "Fetching tweets from cache url=#{url}"
         else
           response = http_request.call
           client.write(url, response) unless stop_requested?
@@ -216,10 +216,16 @@ module Twitterscraper
     end
 
     def query_tweets(query, type: 'search', start_date: nil, end_date: nil, lang: nil, limit: 100, daily_limit: nil, order: 'desc', threads: 10, threads_granularity: 'auto')
-      start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
-      end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
-      queries = build_queries(query, start_date, end_date, threads_granularity)
       type = Type.new(type)
+      if type.search?
+        start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
+        end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
+      elsif type.user?
+        start_date = nil
+        end_date = nil
+      end
+
+      queries = build_queries(query, start_date, end_date, threads_granularity)
       if threads > queries.size
         threads = queries.size
       end
@@ -269,7 +275,7 @@ module Twitterscraper
     end
 
     def user_timeline(screen_name, limit: 100, order: 'desc')
-      query_tweets(screen_name, type: 'user', start_date: nil, end_date: nil, lang: nil, limit: limit, daily_limit: nil, order: order, threads: 1, threads_granularity: threads_granularity)
+      query_tweets(screen_name, type: 'user', start_date: nil, end_date: nil, lang: nil, limit: limit, daily_limit: nil, order: order, threads: 1, threads_granularity: nil)
     end
   end
 end

@@ -88,12 +88,18 @@ module Twitterscraper
       options['threads_granularity'] ||= 'auto'
       options['format'] ||= 'json'
       options['order'] ||= 'desc'
-      options['output'] ||= "tweets.#{options['format']}"
+      options['output'] ||= build_output_name(options)
 
       options['cache'] = options['cache'] != 'false'
       options['proxy'] = options['proxy'] != 'false'
 
       options
+    end
+
+    def build_output_name(options)
+      query = ERB::Util.url_encode(options['query'])
+      date = [options['start_date'], options['end_date']].select { |val| val && !val.empty? }.join('_')
+      [options['type'], 'tweets', date, query].compact.join('_') + '.' + options['format']
     end
 
     def initialize_logger
