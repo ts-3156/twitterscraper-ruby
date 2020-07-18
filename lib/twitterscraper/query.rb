@@ -101,6 +101,7 @@ module Twitterscraper
 
       if json_resp && json_resp['message']
         logger.warn json_resp['message'] # Sorry, you are rate limited.
+        @stop_requested = true
         Cache.new.delete(url) if cache_enabled?
       end
 
