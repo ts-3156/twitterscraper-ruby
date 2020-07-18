@@ -33,9 +33,13 @@
               title: {
                   text: '<%= tweets_size %> tweets of <%= chart_name %>'
               },
+              subtitle: {
+                  text: 'since:<%= first_tweet.created_at %> until:<%= last_tweet.created_at %>'
+              },
               series: [{
                   data: <%= chart_data %>
               }],
+              rangeSelector: {enabled: false},
               scrollbar: {enabled: false},
               navigator: {enabled: false},
               exporting: {enabled: false},

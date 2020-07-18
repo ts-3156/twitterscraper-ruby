@@ -144,13 +144,6 @@ module Twitterscraper
           raise Error.new(":start_date must be greater than or equal to #{OLDEST_DATE}")
         end
       end
-
-      if end_date
-        today = Date.today
-        if end_date > Date.today
-          raise Error.new(":end_date must be less than or equal to today(#{today})")
-        end
-      end
     end
 
     def build_queries(query, start_date, end_date)
