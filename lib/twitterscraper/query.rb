@@ -147,21 +147,27 @@ module Twitterscraper
       end
     end
 
-    def build_queries(query, start_date, end_date)
+    def build_queries(query, start_date, end_date, threads_granularity)
       if start_date && end_date
-        # date_range = start_date.upto(end_date - 1)
-        # date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+        if threads_granularity == 'auto'
+          threads_granularity = start_date.upto(end_date - 1).to_a.size >= 28 ? 'day' : 'hour'
+        end
 
-        queries = []
-        time = Time.utc(start_date.year, start_date.month, start_date.day, 0, 0, 0)
-        end_time = Time.utc(end_date.year, end_date.month, end_date.day, 0, 0, 0)
+        if threads_granularity == 'day'
+          date_range = start_date.upto(end_date - 1)
+          queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+        else
+          time = Time.utc(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+          end_time = Time.utc(end_date.year, end_date.month, end_date.day, 0, 0, 0)
+          queries = []
 
-        while true
-          if time < Time.now.utc
-            queries << (query + " since:#{time.strftime('%Y-%m-%d_%H:00:00')}_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H:00:00')}_UTC")
+          while true
+            if time < Time.now.utc
+              queries << (query + " since:#{time.strftime('%Y-%m-%d_%H:00:00')}_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H:00:00')}_UTC")
+            end
+            time += 3600
+            break if time >= end_time
           end
-          time += 3600
-          break if time >= end_time
         end
 
         queries
@@ -209,10 +215,10 @@ module Twitterscraper
       @stop_requested
     end
 
-    def query_tweets(query, type: 'search', start_date: nil, end_date: nil, lang: nil, limit: 100, daily_limit: nil, order: 'desc', threads: 2)
+    def query_tweets(query, type: 'search', start_date: nil, end_date: nil, lang: nil, limit: 100, daily_limit: nil, order: 'desc', threads: 10, threads_granularity: 'auto')
       start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
       end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
-      queries = build_queries(query, start_date, end_date)
+      queries = build_queries(query, start_date, end_date, threads_granularity)
       type = Type.new(type)
       if threads > queries.size
         threads = queries.size
@@ -228,6 +234,7 @@ module Twitterscraper
 
       validate_options!(queries, type: type, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads)
 
+      logger.info "The number of queries #{queries.size}"
       logger.info "The number of threads #{threads}"
 
       headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
@@ -252,15 +259,17 @@ module Twitterscraper
         end
       end
 
+      logger.info "Return #{@all_tweets.size} tweets"
+
       @all_tweets.sort_by { |tweet| (order == 'desc' ? -1 : 1) * tweet.created_at.to_i }
     end
 
-    def search(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, order: 'desc', threads: 2)
-      query_tweets(query, type: 'search', start_date: start_date, end_date: end_date, lang: lang, limit: limit, daily_limit: daily_limit, order: order, threads: threads)
+    def search(query, start_date: nil, end_date: nil, lang: '', limit: 100, daily_limit: nil, order: 'desc', threads: 10, threads_granularity: 'auto')
+      query_tweets(query, type: 'search', start_date: start_date, end_date: end_date, lang: lang, limit: limit, daily_limit: daily_limit, order: order, threads: threads, threads_granularity: threads_granularity)
     end
 
     def user_timeline(screen_name, limit: 100, order: 'desc')
-      query_tweets(screen_name, type: 'user', start_date: nil, end_date: nil, lang: nil, limit: limit, daily_limit: nil, order: order, threads: 1)
+      query_tweets(screen_name, type: 'user', start_date: nil, end_date: nil, lang: nil, limit: limit, daily_limit: nil, order: order, threads: 1, threads_granularity: threads_granularity)
     end
   end
 end
