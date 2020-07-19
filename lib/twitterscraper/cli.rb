@@ -32,12 +32,14 @@ module Twitterscraper
     end
 
     def export(name, tweets)
-      write_json = lambda { File.write(options['output'], generate_json(tweets)) }
+      filepath = options['output']
+      Dir.mkdir(File.dirname(filepath)) unless File.exist?(File.dirname(filepath))
+      write_json = lambda { File.write(filepath, generate_json(tweets)) }
 
       if options['format'] == 'json'
         write_json.call
       elsif options['format'] == 'html'
-        File.write(options['output'], Template.new.tweets_embedded_html(name, tweets, options))
+        File.write(filepath, Template.new.tweets_embedded_html(name, tweets, options))
       else
         write_json.call
       end
@@ -97,9 +99,9 @@ module Twitterscraper
     end
 
     def build_output_name(options)
-      query = ERB::Util.url_encode(options['query'])
+      query = options['query'].gsub(/[ :?#&]/, '_')
       date = [options['start_date'], options['end_date']].select { |val| val && !val.empty? }.join('_')
-      [options['type'], 'tweets', date, query].compact.join('_') + '.' + options['format']
+      File.join('out', [options['type'], 'tweets', date, query].compact.join('_') + '.' + options['format'])
     end
 
     def initialize_logger

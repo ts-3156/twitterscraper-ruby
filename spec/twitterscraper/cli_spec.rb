@@ -47,6 +47,6 @@ RSpec.describe Twitterscraper::Cli do
   describe '#build_output_name' do
     let(:options) { {'type' => 'search', 'query' => 'q', 'start_date' => 'sd', 'end_date' => 'ed', 'format' => 'f'} }
     subject { cli.build_output_name(options) }
-    it { is_expected.to eq('search_tweets_sd_ed_q.f') }
+    it { is_expected.to eq('out/search_tweets_sd_ed_q.f') }
   end
 end

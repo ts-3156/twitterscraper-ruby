@@ -23,14 +23,14 @@
       }
 
       function drawChart() {
-          var data = <%= chart_data %>;
           Highcharts.setOptions({
               time: {
                   timezone: moment.tz.guess()
               }
           });
 
-          Highcharts.stockChart('chart', {
+          var data = <%= chart_data %>;
+          var config = {
               title: {
                   text: '<%= tweets.size %> tweets of <%= chart_name %>'
               },
@@ -45,7 +45,9 @@
               navigator: {enabled: false},
               exporting: {enabled: false},
               credits: {enabled: false}
-          });
+          };
+
+          Highcharts.stockChart('chart-container', config);
       }
 
       document.addEventListener("DOMContentLoaded", function () {
@@ -55,6 +57,15 @@
   </script>
 
   <style type=text/css>
+    #chart-container {
+      max-width: 1200px;
+      height: 675px;
+      margin: 0 auto;
+      border: 1px solid rgb(204, 214, 221);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
     .tweets-container {
       max-width: 550px;
       margin: 0 auto 0 auto;
@@ -66,10 +77,10 @@
   </style>
 </head>
 <body>
-<div id="chart" style="width: 100vw; height: 400px;"></div>
+<div id="chart-container"><div style="color: gray;">Loading...</div></div>
 
 <div class="tweets-container">
-  <% tweets.each.with_index do |tweet, i| %>
+  <% tweets.sort_by { |t| -t.created_at.to_i }.each.with_index do |tweet, i| %>
     <% tweet_time = tweet.created_at.localtime.strftime('%Y-%m-%d %H:%M') %>
     <% if i < convert_limit %>
       <blockquote class="twitter-tweet">
