@@ -10,14 +10,6 @@ module Twitterscraper
   module Query
     include Logger
 
-    USER_AGENT_LIST = [
-        'Mozilla/5.0 (Windows; U; Windows NT 6.1; x64; fr; rv:1.9.2.13) Gecko/20101203 Firebird/3.6.13',
-        'Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko',
-        'Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201',
-        'Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16',
-        'Mozilla/5.0 (Windows NT 5.2; RW; rv:7.0a1) Gecko/20091211 SeaMonkey/9.23a1pre',
-    ]
-
     INIT_URL = 'https://twitter.com/search?f=tweets&vertical=default&q=__QUERY__&l=__LANG__'
     RELOAD_URL = 'https://twitter.com/i/search/timeline?f=tweets&vertical=' +
         'default&include_available_features=1&include_entities=1&' +
@@ -43,13 +35,13 @@ module Twitterscraper
       end
     end
 
-    def get_single_page(url, headers, proxies, timeout = 6, retries = 30)
+    def get_single_page(url, timeout = 6, retries = 30)
       return nil if stop_requested?
-      unless proxies.empty?
+      if proxy_enabled?
         proxy = proxies.sample
         logger.info("Using proxy #{proxy}")
       end
-      Http.get(url, headers, proxy, timeout)
+      Http.get(url, request_headers, proxy, timeout)
     rescue => e
       logger.debug "get_single_page: #{e.inspect}"
       if (retries -= 1) > 0
@@ -74,14 +66,14 @@ module Twitterscraper
       [items_html, json_resp]
     end
 
-    def query_single_page(query, lang, type, pos, headers: [], proxies: [])
+    def query_single_page(query, lang, type, pos)
       logger.info "Querying #{query}"
       encoded_query = ERB::Util.url_encode(query)
 
       url = build_query_url(encoded_query, lang, type, pos)
       http_request = lambda do
         logger.debug "Scraping tweets from url=#{url}"
-        get_single_page(url, headers, proxies)
+        get_single_page(url)
       end
 
       if cache_enabled?
@@ -185,12 +177,12 @@ module Twitterscraper
       end
     end
 
-    def main_loop(query, lang, type, limit, daily_limit, headers, proxies)
+    def main_loop(query, lang, type, limit, daily_limit)
       pos = nil
       daily_tweets = []
 
       while true
-        new_tweets, new_pos = query_single_page(query, lang, type, pos, headers: headers, proxies: proxies)
+        new_tweets, new_pos = query_single_page(query, lang, type, pos)
         unless new_tweets.empty?
           daily_tweets.concat(new_tweets)
           daily_tweets.uniq! { |t| t.tweet_id }
@@ -213,6 +205,8 @@ module Twitterscraper
         logger.warn "The limit you specified has been reached limit=#{limit} tweets=#{@all_tweets.size}"
         @stop_requested = true
       end
+
+      daily_tweets
     end
 
     def stop_requested?
@@ -233,22 +227,12 @@ module Twitterscraper
       if threads > queries.size
         threads = queries.size
       end
-      if proxy_enabled?
-        proxies = Proxy::Pool.new
-        logger.debug "Fetch #{proxies.size} proxies"
-      else
-        proxies = []
-        logger.debug 'Proxy disabled'
-      end
       logger.debug "Cache #{cache_enabled? ? 'enabled' : 'disabled'}"
 
       validate_options!(queries, type: type, start_date: start_date, end_date: end_date, lang: lang, limit: limit, threads: threads)
 
       logger.info "The number of queries #{queries.size}"
       logger.info "The number of threads #{threads}"
-
-      headers = {'User-Agent': USER_AGENT_LIST.sample, 'X-Requested-With': 'XMLHttpRequest'}
-      logger.info "Headers #{headers}"
 
       @all_tweets = []
       @mutex = Mutex.new
@@ -259,12 +243,12 @@ module Twitterscraper
         logger.debug "Set 'Thread.abort_on_exception' to true"
 
         Parallel.each(queries, in_threads: threads) do |query|
-          main_loop(query, lang, type, limit, daily_limit, headers, proxies)
+          main_loop(query, lang, type, limit, daily_limit)
           raise Parallel::Break if stop_requested?
         end
       else
         queries.each do |query|
-          main_loop(query, lang, type, limit, daily_limit, headers, proxies)
+          main_loop(query, lang, type, limit, daily_limit)
           break if stop_requested?
         end
       end
