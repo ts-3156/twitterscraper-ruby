@@ -3,7 +3,6 @@ RSpec.describe Twitterscraper::Cli do
 
   describe '#parse_options' do
     subject { cli.parse_options(ARGV) }
-    before { allow(cli).to receive(:build_output_name).with(anything).and_return('filename') }
 
     context 'no option is passed' do
       it do
@@ -16,7 +15,6 @@ RSpec.describe Twitterscraper::Cli do
         expect(result['threads']).to eq(10)
         expect(result['threads_granularity']).to eq('auto')
         expect(result['format']).to eq('json')
-        expect(result['output']).to eq('filename')
 
         expect(result['cache']).to be_truthy
         expect(result['proxy']).to be_truthy
@@ -45,8 +43,8 @@ RSpec.describe Twitterscraper::Cli do
   end
 
   describe '#build_output_name' do
-    let(:options) { {'type' => 'search', 'query' => 'q', 'start_date' => 'sd', 'end_date' => 'ed', 'format' => 'f'} }
-    subject { cli.build_output_name(options) }
+    let(:options) { {'type' => 'search', 'query' => 'q', 'start_date' => 'sd', 'end_date' => 'ed'} }
+    subject { cli.build_output_name('f', options) }
     it { is_expected.to eq('out/search_tweets_sd_ed_q.f') }
   end
 end

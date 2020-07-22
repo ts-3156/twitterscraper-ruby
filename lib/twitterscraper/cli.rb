@@ -32,16 +32,17 @@ module Twitterscraper
     end
 
     def export(name, tweets)
-      filepath = options['output']
-      Dir.mkdir(File.dirname(filepath)) unless File.exist?(File.dirname(filepath))
-      write_json = lambda { File.write(filepath, generate_json(tweets)) }
+      options['format'].split(',').map(&:strip).each do |format|
+        file = build_output_name(format, options)
+        Dir.mkdir(File.dirname(file)) unless File.exist?(File.dirname(file))
 
-      if options['format'] == 'json'
-        write_json.call
-      elsif options['format'] == 'html'
-        File.write(filepath, Template.new.tweets_embedded_html(name, tweets, options))
-      else
-        write_json.call
+        if format == 'json'
+          File.write(file, generate_json(tweets))
+        elsif format == 'html'
+          File.write(file, Template.new.tweets_embedded_html(name, tweets, options))
+        else
+          puts "Invalid format #{format}"
+        end
       end
     end
 
@@ -90,7 +91,6 @@ module Twitterscraper
       options['threads_granularity'] ||= 'auto'
       options['format'] ||= 'json'
       options['order'] ||= 'desc'
-      options['output'] ||= build_output_name(options)
 
       options['cache'] = options['cache'] != 'false'
       options['proxy'] = options['proxy'] != 'false'
@@ -98,10 +98,11 @@ module Twitterscraper
       options
     end
 
-    def build_output_name(options)
+    def build_output_name(format, options)
       query = options['query'].gsub(/[ :?#&]/, '_')
       date = [options['start_date'], options['end_date']].select { |val| val && !val.empty? }.join('_')
-      File.join('out', [options['type'], 'tweets', date, query].compact.join('_') + '.' + options['format'])
+      file = [options['type'], 'tweets', date, query].compact.join('_') + '.' + format
+      File.join('out', file)
     end
 
     def initialize_logger

@@ -16,17 +16,22 @@ module Twitterscraper
       )
     end
 
-    def chart_data(tweets, trimming: true, smoothing: true)
-      min_interval = 5
-
-      data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
-        t = tweet.created_at
-        min = (t.min.to_f / min_interval).floor * min_interval
-        time = Time.new(t.year, t.month, t.day, t.hour, min, 0, '+00:00')
-        memo[time.to_i] += 1
+    def chart_data(tweets, grouping: true, trimming: false, smoothing: false)
+      if grouping
+        min_interval = 5
+        data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
+          t = tweet.created_at
+          min = (t.min.to_f / min_interval).floor * min_interval
+          time = Time.new(t.year, t.month, t.day, t.hour, min, 0, '+00:00')
+          memo[time.to_i] += 1
+        end
+      else
+        data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
+          memo[tweet.created_at.to_i] += 1
+        end
       end
 
-      if false && trimming
+      if trimming
         data.keys.sort.each.with_index do |timestamp, i|
           break if data.size - 1 == i
           if data[i] == 0 && data[i + 1] == 0
@@ -35,7 +40,7 @@ module Twitterscraper
         end
       end
 
-      if false && smoothing
+      if smoothing
         time = data.keys.min
         max_time = data.keys.max
         sec_interval = 60 * min_interval
