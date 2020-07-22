@@ -16,44 +16,37 @@ module Twitterscraper
       )
     end
 
-    def chart_data(tweets, grouping: true, trimming: false, smoothing: false)
-      if grouping
-        min_interval = 5
-        data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
-          t = tweet.created_at
-          min = (t.min.to_f / min_interval).floor * min_interval
-          time = Time.new(t.year, t.month, t.day, t.hour, min, 0, '+00:00')
-          memo[time.to_i] += 1
-        end
-      else
-        data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
-          memo[tweet.created_at.to_i] += 1
-        end
-      end
+    def chart_data(tweets, grouping: 'auto')
+      if grouping && tweets.size > 100
+        if grouping == 'auto'
+          month = 28 * 24 * 60 * 60 # 28 days
+          duration = tweets[-1].created_at - tweets[0].created_at
 
-      if trimming
-        data.keys.sort.each.with_index do |timestamp, i|
-          break if data.size - 1 == i
-          if data[i] == 0 && data[i + 1] == 0
-            data.delete(timestamp)
+          if duration > 3 * month
+            grouping = 'day'
+          elsif duration > month || tweets.size > 10000
+            grouping = 'hour'
+          else
+            grouping = 'minute'
           end
         end
       end
 
-      if smoothing
-        time = data.keys.min
-        max_time = data.keys.max
-        sec_interval = 60 * min_interval
+      Twitterscraper.logger.info "Chart grouping #{grouping}"
 
-        while true
-          next_time = time + sec_interval
-          break if next_time + sec_interval > max_time
+      data = tweets.each_with_object(Hash.new(0)) do |tweet, memo|
+        t = tweet.created_at
 
-          unless data.has_key?(next_time)
-            data[next_time] = (data[time] + data[next_time + sec_interval]) / 2
-          end
-          time = next_time
+        if grouping == 'day'
+          time = Time.new(t.year, t.month, t.day, 0, 0, 0, '+00:00')
+        elsif grouping == 'hour'
+          time = Time.new(t.year, t.month, t.day, t.hour, 0, 0, '+00:00')
+        elsif grouping == 'minute'
+          time = Time.new(t.year, t.month, t.day, t.hour, t.min, 0, '+00:00')
+        else
+          time = t
         end
+        memo[time.to_i] += 1
       end
 
       data.sort_by { |k, _| k }.map do |timestamp, count|
