@@ -83,7 +83,7 @@
 <div id="chart-container"><div style="color: gray;">Loading...</div></div>
 
 <div class="tweets-container">
-  <% tweets.sort_by { |t| -t.created_at.to_i }.each.with_index do |tweet, i| %>
+  <% tweets.sort_by { |t| -t.created_at.to_i }.take(1000).each.with_index do |tweet, i| %>
     <% tweet_time = tweet.created_at.localtime.strftime('%Y-%m-%d %H:%M') %>
     <% if i < convert_limit %>
       <blockquote class="twitter-tweet">

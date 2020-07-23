@@ -190,20 +190,21 @@ module Twitterscraper
           @mutex.synchronize {
             @all_tweets.concat(new_tweets)
             @all_tweets.uniq! { |t| t.tweet_id }
+            logger.info "Got tweets new=#{new_tweets.size} total=#{daily_tweets.size} all=#{@all_tweets.size}"
+
+            if !@stop_requested && @all_tweets.size >= limit
+              logger.warn "The limit you specified has been reached limit=#{limit} tweets=#{@all_tweets.size}"
+              @stop_requested = true
+            end
           }
         end
-        logger.info "Got #{new_tweets.size} tweets (total #{@all_tweets.size})"
 
         break unless new_pos
+        break if @stop_requested
         break if daily_limit && daily_tweets.size >= daily_limit
         break if @all_tweets.size >= limit
 
         pos = new_pos
-      end
-
-      if !@stop_requested && @all_tweets.size >= limit
-        logger.warn "The limit you specified has been reached limit=#{limit} tweets=#{@all_tweets.size}"
-        @stop_requested = true
       end
 
       daily_tweets

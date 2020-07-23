@@ -25,6 +25,12 @@ module Twitterscraper
       File.write(file, entry.to_json)
     end
 
+    def exist?(key)
+      key = cache_key(key)
+      file = File.join(@dir, key)
+      File.exist?(file)
+    end
+
     def delete(key)
       key = cache_key(key)
       file = File.join(@dir, key)

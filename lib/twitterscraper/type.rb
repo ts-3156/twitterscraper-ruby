@@ -11,5 +11,9 @@ module Twitterscraper
     def user?
       @value == 'user'
     end
+
+    def to_s
+      @value
+    end
   end
 end
