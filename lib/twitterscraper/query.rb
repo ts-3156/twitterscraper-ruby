@@ -152,7 +152,7 @@ module Twitterscraper
         if threads_granularity == 'day'
           date_range = start_date.upto(end_date - 1)
           queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
-        else
+        elsif threads_granularity == 'hour'
           time = Time.utc(start_date.year, start_date.month, start_date.day, 0, 0, 0)
           end_time = Time.utc(end_date.year, end_date.month, end_date.day, 0, 0, 0)
           queries = []
@@ -179,35 +179,33 @@ module Twitterscraper
 
     def main_loop(query, lang, type, limit, daily_limit)
       pos = nil
-      daily_tweets = []
+      tmp_tweets = []
 
       while true
         new_tweets, new_pos = query_single_page(query, lang, type, pos)
         unless new_tweets.empty?
-          daily_tweets.concat(new_tweets)
-          daily_tweets.uniq! { |t| t.tweet_id }
+          tmp_tweets.concat(new_tweets)
+          tmp_tweets.uniq! { |t| t.tweet_id }
+        end
 
-          @mutex.synchronize {
-            @all_tweets.concat(new_tweets)
-            @all_tweets.uniq! { |t| t.tweet_id }
-            logger.info "Got tweets new=#{new_tweets.size} total=#{daily_tweets.size} all=#{@all_tweets.size}"
+        @results_counter[Parallel.worker_number] = tmp_tweets.size
+        total_size = @all_tweets.size + @results_counter.values.sum
+        logger.info "Got tweets new=#{new_tweets.size} tmp=#{tmp_tweets.size} all=#{@all_tweets.size} total=#{total_size}"
 
-            if !@stop_requested && @all_tweets.size >= limit
-              logger.warn "The limit you specified has been reached limit=#{limit} tweets=#{@all_tweets.size}"
-              @stop_requested = true
-            end
-          }
+        if !@stop_requested && total_size >= limit
+          logger.warn "The limit you specified has been reached limit=#{limit} tweets=#{total_size}"
+          @stop_requested = true
         end
 
         break unless new_pos
         break if @stop_requested
-        break if daily_limit && daily_tweets.size >= daily_limit
+        break if daily_limit && tmp_tweets.size >= daily_limit
         break if @all_tweets.size >= limit
 
         pos = new_pos
       end
 
-      daily_tweets
+      tmp_tweets
     end
 
     def stop_requested?
@@ -236,20 +234,31 @@ module Twitterscraper
       logger.info "The number of threads #{threads}"
 
       @all_tweets = []
-      @mutex = Mutex.new
       @stop_requested = false
+      @results_counter = {}
 
       if threads > 1
+        @mutex = Mutex.new
         Thread.abort_on_exception = true
         logger.debug "Set 'Thread.abort_on_exception' to true"
 
         Parallel.each(queries, in_threads: threads) do |query|
-          main_loop(query, lang, type, limit, daily_limit)
+          @results_counter[Parallel.worker_number] = 0
+          tmp_tweets = main_loop(query, lang, type, limit, daily_limit)
+          @mutex.synchronize {
+            @all_tweets.concat(tmp_tweets)
+            @all_tweets.uniq! { |t| t.tweet_id }
+          }
+          @results_counter[Parallel.worker_number] = 0
+
           raise Parallel::Break if stop_requested?
         end
       else
         queries.each do |query|
-          main_loop(query, lang, type, limit, daily_limit)
+          tmp_tweets = main_loop(query, lang, type, limit, daily_limit)
+          @all_tweets.concat(tmp_tweets)
+          @all_tweets.uniq! { |t| t.tweet_id }
+
           break if stop_requested?
         end
       end

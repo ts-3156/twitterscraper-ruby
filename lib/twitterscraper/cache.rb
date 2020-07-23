@@ -4,7 +4,7 @@ require 'digest/md5'
 module Twitterscraper
   class Cache
     def initialize()
-      @ttl = 86400 # 1 day
+      @ttl = 86400 * 3 # 3 day
       @dir = 'cache'
       Dir.mkdir(@dir) unless File.exist?(@dir)
     end
