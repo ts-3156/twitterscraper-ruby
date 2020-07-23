@@ -131,19 +131,27 @@ module Twitterscraper
       if start_date && end_date
         if start_date == end_date
           raise Error.new('Please specify different values for :start_date and :end_date.')
-        elsif start_date > end_date
+        elsif Date.parse(start_date) > Date.parse(end_date)
           raise Error.new(':start_date must occur before :end_date.')
         end
       end
 
       if start_date
-        if start_date < OLDEST_DATE
+        if Date.parse(start_date) < OLDEST_DATE
           raise Error.new(":start_date must be greater than or equal to #{OLDEST_DATE}")
         end
       end
     end
 
-    def build_queries(query, start_date, end_date, threads_granularity)
+    def build_queries(query, start_date, end_date, threads_granularity, type)
+      if type.search?
+        start_date = Date.parse(start_date) if start_date.is_a?(String)
+        end_date = Date.parse(end_date) if end_date.is_a?(String)
+      elsif type.user?
+        start_date = nil
+        end_date = nil
+      end
+
       if start_date && end_date
         if threads_granularity == 'auto'
           threads_granularity = start_date.upto(end_date - 1).to_a.size >= 28 ? 'day' : 'hour'
@@ -151,7 +159,7 @@ module Twitterscraper
 
         if threads_granularity == 'day'
           date_range = start_date.upto(end_date - 1)
-          queries = date_range.map { |date| query + " since:#{date} until:#{date + 1}" }
+          queries = date_range.map { |date| query + " since:#{date}_00:00:00_UTC until:#{date + 1}_00:00:00_UTC" }
         elsif threads_granularity == 'hour'
           time = Time.utc(start_date.year, start_date.month, start_date.day, 0, 0, 0)
           end_time = Time.utc(end_date.year, end_date.month, end_date.day, 0, 0, 0)
@@ -159,19 +167,21 @@ module Twitterscraper
 
           while true
             if time < Time.now.utc
-              queries << (query + " since:#{time.strftime('%Y-%m-%d_%H:00:00')}_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H:00:00')}_UTC")
+              queries << (query + " since:#{time.strftime('%Y-%m-%d_%H')}:00:00_UTC until:#{(time + 3600).strftime('%Y-%m-%d_%H')}:00:00_UTC")
             end
             time += 3600
             break if time >= end_time
           end
+        else
+          raise Error.new("Invalid :threads_granularity value=#{threads_granularity}")
         end
 
         @queries = queries
 
       elsif start_date
-        [query + " since:#{start_date}"]
+        [query + " since:#{start_date}_00:00:00_UTC"]
       elsif end_date
-        [query + " until:#{end_date}"]
+        [query + " until:#{end_date}_00:00:00_UTC"]
       else
         [query]
       end
@@ -214,15 +224,7 @@ module Twitterscraper
 
     def query_tweets(query, type: 'search', start_date: nil, end_date: nil, lang: nil, limit: 100, daily_limit: nil, order: 'desc', threads: 10, threads_granularity: 'auto')
       type = Type.new(type)
-      if type.search?
-        start_date = Date.parse(start_date) if start_date && start_date.is_a?(String)
-        end_date = Date.parse(end_date) if end_date && end_date.is_a?(String)
-      elsif type.user?
-        start_date = nil
-        end_date = nil
-      end
-
-      queries = build_queries(query, start_date, end_date, threads_granularity)
+      queries = build_queries(query, start_date, end_date, threads_granularity, type)
       if threads > queries.size
         threads = queries.size
       end
