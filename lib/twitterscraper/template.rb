@@ -5,10 +5,11 @@ module Twitterscraper
       template = ERB.new(File.read(path))
 
       tweets = tweets.sort_by { |t| t.created_at.to_i }
+      grouping = options['chart_grouping'] || 'auto'
 
       template.result_with_hash(
           chart_name: name,
-          chart_data: chart_data(tweets).to_json,
+          chart_data: chart_data(tweets, grouping: grouping).to_json,
           first_tweet: tweets[0],
           last_tweet: tweets[-1],
           tweets: tweets,

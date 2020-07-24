@@ -74,6 +74,7 @@ module Twitterscraper
           'order:',
           'threads:',
           'threads_granularity:',
+          'chart_grouping:',
           'output:',
           'format:',
           'cache:',

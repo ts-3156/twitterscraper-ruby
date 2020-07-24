@@ -175,7 +175,8 @@ Search operators documentation is in [Standard search operators](https://develop
 | `--limit`      | integer | Stop scraping when *at least* the number of tweets indicated with --limit is scraped. | 100 |
 | `--order`      | string  | Sort a order of the results. | desc(default) or asc |
 | `--threads`    | integer | Set the number of threads twitterscraper-ruby should initiate while scraping for your query. | 2 |
-| `--threads_granularity` | string | | auto |
+| `--threads_granularity` | string | day or hour | auto |
+| `--chart_grouping` | string | day, hour or minute | auto |
 | `--proxy`      | boolean | Scrape https://twitter.com/search via proxies. | true(default) or false |
 | `--cache`      | boolean | Enable caching. | true(default) or false |
 | `--format`     | string  | The format of the output. | json(default) or html |
