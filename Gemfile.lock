@@ -9,11 +9,13 @@ GEM
   remote: https://rubygems.org/
   specs:
     diff-lcs (1.4.4)
-    mini_portile2 (2.4.0)
+    mini_portile2 (2.8.0)
     minitest (5.14.1)
-    nokogiri (1.10.10)
-      mini_portile2 (~> 2.4.0)
+    nokogiri (1.13.4)
+      mini_portile2 (~> 2.8.0)
+      racc (~> 1.4)
     parallel (1.19.2)
+    racc (1.6.0)
     rake (12.3.3)
     rspec (3.9.0)
       rspec-core (~> 3.9.0)
